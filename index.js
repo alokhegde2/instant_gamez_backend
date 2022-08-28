@@ -37,8 +37,14 @@ app.use(helmet());
 // ROUTE MIDDLEWARE IMPORTS
 const adminRoute = require("./routes/admin/admin");
 
+// CATEGORY MODULE
+const categoryRoute = require("./routes/category/category");
+
 // ROUTE MIDDLEWARES
 app.use(`${api}/admin`, adminRoute);
+
+// CATEGORY MODULE
+app.use(`${api}/category`, categoryRoute);
 
 //Connecting to mongodb database
 mongoose
