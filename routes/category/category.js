@@ -25,11 +25,12 @@ router.post("/", verify, async (req, res) => {
   }
 
   // DATA RECIVED FROM THE REQUEST BODY
-  const { name } = req.body;
+  const { name, digits } = req.body;
 
   // CREATING THE CATEGORY DATA
   var categoryData = new Category({
     name: name,
+    digits: digits,
   });
 
   try {

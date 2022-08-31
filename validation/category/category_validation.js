@@ -5,6 +5,7 @@ const Joi = require("joi");
 const categoryValidation = (data) => {
   const schema = Joi.object({
     name: Joi.string().min(2).required(),
+    digits: Joi.array().required(),
   });
 
   return schema.validate(data);

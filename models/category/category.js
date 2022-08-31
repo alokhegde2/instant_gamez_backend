@@ -8,6 +8,10 @@ const categorySchema = new mongoose.Schema({
     min: 3,
     max: 255,
   },
+  digits: {
+    type: Array,
+    required: true,
+  },
 
   createdDate: {
     type: Date,
