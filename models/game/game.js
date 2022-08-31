@@ -21,14 +21,14 @@ const gameSchema = new mongoose.Schema({
     required: true,
     default: false,
   },
-  isResultAnounced: {
+  isResultAnnounced: {
     type: Boolean,
     required: true,
     default: false,
   },
   createdDate: {
     type: Date,
-    default: Date.now(),
+    default: Date.now,
   },
 });
 
