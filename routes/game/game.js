@@ -88,12 +88,18 @@ router.get("/current", verify, async (req, res) => {
         $gte: new Date(
           currentDate.getFullYear(),
           currentDate.getMonth(),
-          currentDate.getDate()
+          currentDate.getDate(),
+          00,
+          00,
+          00
         ),
         $lt: new Date(
-          tomorrow.getFullYear(),
-          tomorrow.getMonth(),
-          tomorrow.getDate()
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          currentDate.getDate(),
+          23,
+          59,
+          59
         ),
       },
       isCancelled: false,
