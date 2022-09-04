@@ -117,7 +117,7 @@ socketIO.on("connection", (socket) => {
 // Connecting to mongodb database
 mongoose
   .connect(
-    process.env.DEV_DATABASE,
+    process.env.DATABASE,
     // + "/instant_gamez"
     {
       useNewUrlParser: true,
