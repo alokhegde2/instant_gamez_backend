@@ -211,6 +211,12 @@ router.get("/:id", verify, async (req, res) => {
   try {
     var gameData = await Game.findById(id);
 
+    if (gameData === null) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Game not found" });
+    }
+
     //TODO: WHEN BIDDING IS STARTED GET ALSO THE TOTAL BIDS COUNT
 
     return res.status(200).json({ status: "success", game: gameData });
@@ -232,6 +238,14 @@ router.put("/cancel/:id", verify, async (req, res) => {
   }
 
   try {
+    var gameData = await Game.findById(id);
+
+    if (gameData === null) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Game not found" });
+    }
+
     await Game.findByIdAndUpdate(id, { isCancelled: true });
 
     return res
