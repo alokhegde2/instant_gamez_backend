@@ -211,6 +211,8 @@ router.get("/:id", verify, async (req, res) => {
   try {
     var gameData = await Game.findById(id);
 
+    //TODO: WHEN BIDDING IS STARTED GET ALSO THE TOTAL BIDS COUNT
+
     return res.status(200).json({ status: "success", game: gameData });
   } catch (error) {
     console.error(error);
