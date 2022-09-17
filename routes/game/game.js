@@ -118,7 +118,39 @@ router.get("/current", verify, async (req, res) => {
 });
 
 //GETTING UPCOMMING GAMES
-router.get("/upcomming", verify, async (req, res) => {});
+router.get("/upcoming", verify, async (req, res) => {
+  var currentDate = new Date();
+  const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit);
+
+  const startIndex = (page - 1) * limit;
+
+  try {
+    var gameData = await Game.find({
+      openBiddingTime: {
+        $gte: new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          currentDate.getDate(),
+          23,
+          59,
+          59
+        ),
+      },
+      isCancelled: false,
+      isResultAnnounced: false,
+    })
+      .limit(limit)
+      .skip(startIndex);
+
+    return res.status(200).json({ status: "success", games: gameData });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Some error occured", error: error });
+  }
+});
 
 //GETTING COMPLETED GAMES
 router.get("/completed", verify, async (req, res) => {
