@@ -60,7 +60,10 @@ router.get("/", verify, async (req, res) => {
   const startIndex = (page - 1) * limit;
 
   try {
-    var gameData = await Game.find().limit(limit).skip(startIndex);
+    var gameData = await Game.find()
+      .sort({ openBiddingTime: "desc" })
+      .limit(limit)
+      .skip(startIndex);
 
     return res.status(200).json({ status: "success", games: gameData });
   } catch (error) {
