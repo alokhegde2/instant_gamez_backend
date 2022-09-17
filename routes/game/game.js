@@ -108,6 +108,7 @@ router.get("/current", verify, async (req, res) => {
       isCancelled: false,
       isResultAnnounced: false,
     })
+      .sort({ openBiddingTime: "asc" })
       .limit(limit)
       .skip(startIndex);
 
@@ -143,6 +144,7 @@ router.get("/upcoming", verify, async (req, res) => {
       isCancelled: false,
       isResultAnnounced: false,
     })
+      .sort({ openBiddingTime: "asc" })
       .limit(limit)
       .skip(startIndex);
 
@@ -167,6 +169,7 @@ router.get("/completed", verify, async (req, res) => {
       isCancelled: false,
       isResultAnnounced: true,
     })
+      .sort({ openBiddingTime: "asc" })
       .limit(limit)
       .skip(startIndex);
 
@@ -190,6 +193,7 @@ router.get("/cancelled", verify, async (req, res) => {
     var gameData = await Game.find({
       isCancelled: true,
     })
+      .sort({ openBiddingTime: "asc" })
       .limit(limit)
       .skip(startIndex);
 
