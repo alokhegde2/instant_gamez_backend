@@ -199,7 +199,7 @@ router.get("/cancelled", verify, async (req, res) => {
   }
 });
 
-//GETTING COMPLETED GAME (THIS ROUTE FOR USER)
+//GETTING SINGLE GAME
 router.get("/:id", verify, async (req, res) => {
   const { id } = req.params;
 
@@ -212,6 +212,29 @@ router.get("/:id", verify, async (req, res) => {
     var gameData = await Game.findById(id);
 
     return res.status(200).json({ status: "success", game: gameData });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Some error occured", error: error });
+  }
+});
+
+// CANCELLING GAME
+router.put("/cancel/:id", verify, async (req, res) => {
+  const { id } = req.params;
+
+  // VERIFYING GAME ID
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ message: "Invalid Game Id" });
+  }
+
+  try {
+    await Game.findByIdAndUpdate(id, { isCancelled: true });
+
+    return res
+      .status(200)
+      .json({ status: "success", message: "Game Cancelled Successfully!" });
   } catch (error) {
     console.error(error);
     return res
