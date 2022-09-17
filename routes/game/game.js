@@ -61,7 +61,7 @@ router.get("/", verify, async (req, res) => {
 
   try {
     var gameData = await Game.find()
-      .sort({ openBiddingTime: "desc" })
+      .sort({ openBiddingTime: "asc" })
       .limit(limit)
       .skip(startIndex);
 
