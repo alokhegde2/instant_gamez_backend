@@ -245,7 +245,6 @@ router.put("/cancel/:id", verify, async (req, res) => {
         .status(400)
         .json({ status: "error", message: "Game not found" });
     }
-
     await Game.findByIdAndUpdate(id, { isCancelled: true });
 
     return res
