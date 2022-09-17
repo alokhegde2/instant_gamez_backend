@@ -177,6 +177,29 @@ router.get("/completed", verify, async (req, res) => {
 });
 
 //GETTING COMPLETED GAME (THIS ROUTE FOR USER)
+router.get("/cancelled", verify, async (req, res) => {
+  const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit);
+
+  const startIndex = (page - 1) * limit;
+
+  try {
+    var gameData = await Game.find({
+      isCancelled: true,
+    })
+      .limit(limit)
+      .skip(startIndex);
+
+    return res.status(200).json({ status: "success", games: gameData });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Some error occured", error: error });
+  }
+});
+
+//GETTING COMPLETED GAME (THIS ROUTE FOR USER)
 router.get("/completedUser/:userId", verify, async (req, res) => {});
 
 module.exports = router;

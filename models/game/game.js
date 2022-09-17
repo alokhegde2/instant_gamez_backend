@@ -26,6 +26,11 @@ const gameSchema = new mongoose.Schema({
     required: true,
     default: false,
   },
+  result: {
+    type: String,
+    required: false,
+    default: "***_**_***",
+  },
   createdDate: {
     type: Date,
     default: Date.now,
