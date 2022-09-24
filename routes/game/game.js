@@ -106,8 +106,8 @@ router.get("/", verify, async (req, res) => {
 //GETTING CURRENT GAMES
 router.get("/current", verify, async (req, res) => {
   var currentDate = new Date();
-  var tomorrow = new Date();
-  tomorrow.setDate(currentDate.getDate() + 1);
+
+  var day = currentDate.getDay();
 
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
@@ -116,27 +116,54 @@ router.get("/current", verify, async (req, res) => {
 
   try {
     var gameData = await Game.find({
-      openBiddingTime: {
-        $gte: new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth(),
-          currentDate.getDate(),
-          00,
-          00,
-          00
-        ),
-        $lt: new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth(),
-          currentDate.getDate(),
-          23,
-          59,
-          59
-        ),
+      openDate: day,
+      DisabledDates: {
+        $not: {
+          $gte: new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            currentDate.getDate(),
+            00,
+            00,
+            00
+          ),
+          $lt: new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            currentDate.getDate(),
+            23,
+            59,
+            59
+          ),
+        },
       },
-      isCancelled: false,
-      isResultAnnounced: false,
     })
+      .populate({
+        path: "results",
+        select: ["resultString", "anouncedDateTime"],
+        strictPopulate: false,
+        match: {
+          anouncedDateTime: {
+            $gte: new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth(),
+              currentDate.getDate(),
+              00,
+              00,
+              00
+            ),
+            $lt: new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth(),
+              currentDate.getDate(),
+              23,
+              59,
+              59
+            ),
+          },
+        },
+        // justOne
+      })
       .sort({ openBiddingTime: "asc" })
       .limit(limit)
       .skip(startIndex);
@@ -151,6 +178,7 @@ router.get("/current", verify, async (req, res) => {
 });
 
 //GETTING UPCOMMING GAMES
+// TODO : NOT REQUIRED
 router.get("/upcoming", verify, async (req, res) => {
   var currentDate = new Date();
   const page = parseInt(req.query.page);
