@@ -46,6 +46,9 @@ const categoryRoute = require("./routes/category/category");
 // GAME MODULE
 const gameRoute = require("./routes/game/game");
 
+// USER MODULE
+const userRoute = require("./routes/user/user");
+
 // TODO: TESTING MODULE OF THE CHAT
 
 // ROUTE MIDDLEWARES
@@ -56,6 +59,9 @@ app.use(`${api}/category`, categoryRoute);
 
 // GAME MODULE
 app.use(`${api}/game`, gameRoute);
+
+// USER MODULE
+app.use(`${api}/user`, userRoute);
 
 // TODO: TESTING MODULE OF THE CHAT
 socketIO.on("connection", (socket) => {

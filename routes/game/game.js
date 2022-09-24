@@ -145,27 +145,6 @@ router.get("/current", verify, async (req, res) => {
         path: "results",
         select: ["resultString", "anouncedDateTime"],
         strictPopulate: false,
-        match: {
-          anouncedDateTime: {
-            $gte: new Date(
-              currentDate.getFullYear(),
-              currentDate.getMonth(),
-              currentDate.getDate(),
-              00,
-              00,
-              00
-            ),
-            $lt: new Date(
-              currentDate.getFullYear(),
-              currentDate.getMonth(),
-              currentDate.getDate(),
-              23,
-              59,
-              59
-            ),
-          },
-        },
-        // justOne
       })
       .sort({ openBiddingTime: "asc" })
       .limit(limit)
@@ -292,28 +271,9 @@ router.get("/:id", verify, async (req, res) => {
     var gameData = await Game.findById(id).populate({
       path: "results",
       select: ["resultString", "anouncedDateTime"],
+      populate: "winners",
       strictPopulate: false,
-      match: {
-        anouncedDateTime: {
-          $gte: new Date(
-            currentDate.getFullYear(),
-            currentDate.getMonth(),
-            currentDate.getDate(),
-            00,
-            00,
-            00
-          ),
-          $lt: new Date(
-            currentDate.getFullYear(),
-            currentDate.getMonth(),
-            currentDate.getDate(),
-            23,
-            59,
-            59
-          ),
-        },
-      },
-      // justOne
+      options: { limit: 3, sort: { anouncedDateTime: "asc" } },
     });
 
     if (gameData === null) {
