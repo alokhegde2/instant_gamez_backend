@@ -49,6 +49,9 @@ const gameRoute = require("./routes/game/game");
 // USER MODULE
 const userRoute = require("./routes/user/user");
 
+// TRUNCATE MODULE
+const truncateRoute = require("./routes/others/truncate_db");
+
 // TODO: TESTING MODULE OF THE CHAT
 
 // ROUTE MIDDLEWARES
@@ -62,6 +65,9 @@ app.use(`${api}/game`, gameRoute);
 
 // USER MODULE
 app.use(`${api}/user`, userRoute);
+
+// TRUCATING MODULE
+app.use(`${api}/truncate`, truncateRoute);
 
 // TODO: TESTING MODULE OF THE CHAT
 socketIO.on("connection", (socket) => {
@@ -122,13 +128,9 @@ socketIO.on("connection", (socket) => {
 
 // Connecting to mongodb database
 mongoose
-  .connect(
-    process.env.DEV_DATABASE,
-    // + "/instant_gamez",
-    {
-      useNewUrlParser: true,
-    }
-  )
+  .connect(process.env.DATABASE + "/instant_gamez", {
+    useNewUrlParser: true,
+  })
   .then(() => {
     console.log("Database connection is ready");
   })
