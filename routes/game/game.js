@@ -23,16 +23,14 @@ router.post("/", verify, async (req, res) => {
   }
 
   // DATA RECIVED FROM THE REQUEST BODY
-  const { name, openBidTime, closeBidTime } = req.body;
+  const { name, openBidTime, closeBidTime, openDate } = req.body;
 
   // CREATING THE GAME DATA
   var gameData = new Game({
     name: name,
     openBiddingTime: openBidTime,
     closingBiddingTime: closeBidTime,
-    isCancelled: false,
-    isResultAnnounced: false,
-    createdDate: Date.now(),
+    openDate: openDate,
   });
 
   try {
