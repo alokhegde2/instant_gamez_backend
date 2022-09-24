@@ -42,4 +42,4 @@ winnerSchema.set("toJSON", {
 });
 
 //Exporting modules
-module.exports = mongoose.model("Results", winnerSchema);
+module.exports = mongoose.model("Winners", winnerSchema);
