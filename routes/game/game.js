@@ -10,6 +10,7 @@ require("dotenv/config");
 
 //IMPORTING MODEL
 const Game = require("../../models/game/game");
+const Result = require("../../models/game/result");
 
 // IMPORTING VALIDATION
 const { gameValidation } = require("../../validation/game/game_validation");
@@ -51,14 +52,44 @@ router.post("/", verify, async (req, res) => {
 });
 
 // GETTING ALL GAMES
+// It gives the all the games and only todays result
+
 router.get("/", verify, async (req, res) => {
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
 
   const startIndex = (page - 1) * limit;
 
+  var currentDate = new Date();
+
   try {
     var gameData = await Game.find()
+      .populate({
+        path: "results",
+        select: ["resultString", "anouncedDateTime"],
+        strictPopulate: false,
+        match: {
+          anouncedDateTime: {
+            $gte: new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth(),
+              currentDate.getDate(),
+              00,
+              00,
+              00
+            ),
+            $lt: new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth(),
+              currentDate.getDate(),
+              23,
+              59,
+              59
+            ),
+          },
+        },
+        // justOne
+      })
       .sort({ openBiddingTime: "asc" })
       .limit(limit)
       .skip(startIndex);
@@ -265,5 +296,23 @@ router.put("/cancel/:id", verify, async (req, res) => {
 
 //GETTING COMPLETED GAME (THIS ROUTE FOR USER)
 router.get("/completedUser/:userId", verify, async (req, res) => {});
+
+// TODO: TESTING ROUTE
+router.get("/results/:id", async (req, res) => {
+  var gameID = req.params.id;
+
+  try {
+    var results = new Result({
+      resultString: "123_**_***",
+      gameId: gameID,
+    });
+    await results.save();
+
+    return res.send("Success");
+  } catch (error) {
+    console.error(error);
+    return res.send(error);
+  }
+});
 
 module.exports = router;

@@ -30,7 +30,7 @@ const resultSchema = new mongoose.Schema({
   gameId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: "Game",
+    ref: "Games",
   },
 });
 
