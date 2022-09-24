@@ -16,24 +16,30 @@ const gameSchema = new mongoose.Schema({
     type: Date,
     required: true,
   },
-  isCancelled: {
+  openDate: {
+    type: Number,
+    required: [0, 1, 2, 3, 4, 5, 6],
+  },
+  DisabledDates: {
+    type: [Date],
+    default: [],
+  },
+  isDeleted: {
     type: Boolean,
-    required: true,
     default: false,
   },
-  isResultAnnounced: {
-    type: Boolean,
-    required: true,
-    default: false,
-  },
-  result: {
-    type: String,
-    required: false,
-    default: "***_**_***",
+  results: {
+    type: [mongoose.Schema.Types.ObjectId],
+    default: [],
+    ref: "Results",
   },
   createdDate: {
     type: Date,
-    default: Date.now,
+    default: Date.now(),
+  },
+  updatedDate: {
+    type: Date,
+    default: Date.now(),
   },
 });
 

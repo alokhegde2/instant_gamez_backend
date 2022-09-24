@@ -116,9 +116,13 @@ socketIO.on("connection", (socket) => {
 
 // Connecting to mongodb database
 mongoose
-  .connect(process.env.DATABASE + "/instant_gamez", {
-    useNewUrlParser: true,
-  })
+  .connect(
+    process.env.DEV_DATABASE,
+    // + "/instant_gamez",
+    {
+      useNewUrlParser: true,
+    }
+  )
   .then(() => {
     console.log("Database connection is ready");
   })
