@@ -115,8 +115,11 @@ router.get("/current", verify, async (req, res) => {
   const startIndex = (page - 1) * limit;
 
   try {
+    // We are getting data where deleted date is not today
+    // And getting result of only today games
     var gameData = await Game.find({
       openDate: day,
+      isDeleted: false,
       DisabledDates: {
         $not: {
           $gte: new Date(
@@ -177,19 +180,31 @@ router.get("/current", verify, async (req, res) => {
   }
 });
 
-//GETTING UPCOMMING GAMES
-// TODO : NOT REQUIRED
-router.get("/upcoming", verify, async (req, res) => {
-  var currentDate = new Date();
+//GETTING DISABLED GAMES
+router.get("/disabled", verify, async (req, res) => {
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
 
   const startIndex = (page - 1) * limit;
 
+  var currentDate = new Date();
+
+  var day = currentDate.getDay();
+
   try {
     var gameData = await Game.find({
-      openBiddingTime: {
+      openDate: day,
+      isDeleted: false,
+      DisabledDates: {
         $gte: new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          currentDate.getDate(),
+          00,
+          00,
+          00
+        ),
+        $lt: new Date(
           currentDate.getFullYear(),
           currentDate.getMonth(),
           currentDate.getDate(),
@@ -198,9 +213,33 @@ router.get("/upcoming", verify, async (req, res) => {
           59
         ),
       },
-      isCancelled: false,
-      isResultAnnounced: false,
     })
+      .populate({
+        path: "results",
+        select: ["resultString", "anouncedDateTime"],
+        strictPopulate: false,
+        match: {
+          anouncedDateTime: {
+            $gte: new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth(),
+              currentDate.getDate(),
+              00,
+              00,
+              00
+            ),
+            $lt: new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth(),
+              currentDate.getDate(),
+              23,
+              59,
+              59
+            ),
+          },
+        },
+        // justOne
+      })
       .sort({ openBiddingTime: "asc" })
       .limit(limit)
       .skip(startIndex);
@@ -214,32 +253,7 @@ router.get("/upcoming", verify, async (req, res) => {
   }
 });
 
-//GETTING COMPLETED GAMES
-router.get("/completed", verify, async (req, res) => {
-  const page = parseInt(req.query.page);
-  const limit = parseInt(req.query.limit);
-
-  const startIndex = (page - 1) * limit;
-
-  try {
-    var gameData = await Game.find({
-      isCancelled: false,
-      isResultAnnounced: true,
-    })
-      .sort({ openBiddingTime: "asc" })
-      .limit(limit)
-      .skip(startIndex);
-
-    return res.status(200).json({ status: "success", games: gameData });
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ status: "error", message: "Some error occured", error: error });
-  }
-});
-
-//GETTING COMPLETED GAME
+//GETTING CANCELLED GAME
 router.get("/cancelled", verify, async (req, res) => {
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
@@ -248,7 +262,7 @@ router.get("/cancelled", verify, async (req, res) => {
 
   try {
     var gameData = await Game.find({
-      isCancelled: true,
+      isDeleted: true,
     })
       .sort({ openBiddingTime: "asc" })
       .limit(limit)
@@ -267,13 +281,40 @@ router.get("/cancelled", verify, async (req, res) => {
 router.get("/:id", verify, async (req, res) => {
   const { id } = req.params;
 
+  var currentDate = new Date();
+
   // VERIFYING GAME ID
   if (!mongoose.isValidObjectId(id)) {
     return res.status(400).json({ message: "Invalid Game Id" });
   }
 
   try {
-    var gameData = await Game.findById(id);
+    var gameData = await Game.findById(id).populate({
+      path: "results",
+      select: ["resultString", "anouncedDateTime"],
+      strictPopulate: false,
+      match: {
+        anouncedDateTime: {
+          $gte: new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            currentDate.getDate(),
+            00,
+            00,
+            00
+          ),
+          $lt: new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            currentDate.getDate(),
+            23,
+            59,
+            59
+          ),
+        },
+      },
+      // justOne
+    });
 
     if (gameData === null) {
       return res
@@ -324,23 +365,5 @@ router.put("/cancel/:id", verify, async (req, res) => {
 
 //GETTING COMPLETED GAME (THIS ROUTE FOR USER)
 router.get("/completedUser/:userId", verify, async (req, res) => {});
-
-// TODO: TESTING ROUTE
-router.get("/results/:id", async (req, res) => {
-  var gameID = req.params.id;
-
-  try {
-    var results = new Result({
-      resultString: "123_**_***",
-      gameId: gameID,
-    });
-    await results.save();
-
-    return res.send("Success");
-  } catch (error) {
-    console.error(error);
-    return res.send(error);
-  }
-});
 
 module.exports = router;

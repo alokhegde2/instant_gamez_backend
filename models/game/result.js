@@ -15,6 +15,10 @@ const resultSchema = new mongoose.Schema({
     default: [],
     ref: "Users",
   },
+  gameRanOn: {
+    type: Date,
+    default: Date.now(),
+  },
   isRollbacked: {
     type: Boolean,
     default: false,
