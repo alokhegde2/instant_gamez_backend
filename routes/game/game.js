@@ -120,7 +120,7 @@ router.get("/current", verify, async (req, res) => {
     var gameData = await Game.find({
       openDate: day,
       isDeleted: false,
-      DisabledDates: {
+      disabledDate: {
         $not: {
           $gte: new Date(
             currentDate.getFullYear(),
@@ -174,7 +174,7 @@ router.get("/disabled", verify, async (req, res) => {
     var gameData = await Game.find({
       openDate: day,
       isDeleted: false,
-      DisabledDates: {
+      disabledDate: {
         $gte: new Date(
           currentDate.getFullYear(),
           currentDate.getMonth(),
@@ -239,9 +239,31 @@ router.get("/cancelled", verify, async (req, res) => {
 
   const startIndex = (page - 1) * limit;
 
+  var currentDate = new Date();
+
+  var day = currentDate.getDay();
+
   try {
     var gameData = await Game.find({
-      isDeleted: true,
+      openDate: day,
+      disabledDate: {
+        $gte: new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          currentDate.getDate(),
+          00,
+          00,
+          00
+        ),
+        $lt: new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          currentDate.getDate(),
+          23,
+          59,
+          59
+        ),
+      },
     })
       .sort({ openBiddingTime: "asc" })
       .limit(limit)
@@ -270,8 +292,6 @@ router.get("/:id", verify, async (req, res) => {
   try {
     var gameData = await Game.findById(id).populate({
       path: "results",
-      select: ["resultString", "anouncedDateTime"],
-      populate: "winners",
       strictPopulate: false,
       options: { limit: 3, sort: { anouncedDateTime: "asc" } },
     });
@@ -310,7 +330,7 @@ router.put("/cancel/:id", verify, async (req, res) => {
         .status(400)
         .json({ status: "error", message: "Game not found" });
     }
-    await Game.findByIdAndUpdate(id, { isCancelled: true });
+    await Game.findByIdAndUpdate(id, { disabledDate: Date.now() });
 
     return res
       .status(200)

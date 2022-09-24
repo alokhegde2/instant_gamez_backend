@@ -10,11 +10,6 @@ const resultSchema = new mongoose.Schema({
     type: Date,
     default: Date.now(),
   },
-  winners: {
-    type: [mongoose.Schema.Types.ObjectId],
-    default: [],
-    ref: "Users",
-  },
   gameRanOn: {
     type: Date,
     default: Date.now(),
