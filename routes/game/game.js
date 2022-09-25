@@ -26,6 +26,19 @@ router.post("/", verify, async (req, res) => {
   // DATA RECIVED FROM THE REQUEST BODY
   const { name, openBidTime, closeBidTime, openDate } = req.body;
 
+  try {
+    var gameStatus = await Game.find({ name: name });
+
+    if (gameStatus.length !== 0) {
+      return res.status(400).json({ message: "Game name is already taken" });
+    }
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Unable to add the game" });
+  }
+
   // CREATING THE GAME DATA
   var gameData = new Game({
     name: name,
