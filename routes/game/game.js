@@ -27,7 +27,7 @@ router.post("/", verify, async (req, res) => {
   const { name, openBidTime, closeBidTime, openDate } = req.body;
 
   try {
-    var gameStatus = await Game.find({ name: name });
+    var gameStatus = await Game.find({ name: name, isDeleted: false });
 
     if (gameStatus.length !== 0) {
       return res.status(400).json({ message: "Game name is already taken" });
@@ -379,6 +379,39 @@ router.get("/master/sheet", verify, async (req, res) => {
     return res
       .status(200)
       .json({ status: "success", games: gameData, day: day });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Some error occured", error: error });
+  }
+});
+
+/**
+ * Delete the game
+ */
+
+router.put("/delete/:id", verify, async (req, res) => {
+  const { id } = req.params;
+
+  // VERIFYING GAME ID
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ message: "Invalid Game Id" });
+  }
+
+  try {
+    var gameData = await Game.findById(id);
+
+    if (gameData === null) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "Game not found" });
+    }
+    await Game.findByIdAndUpdate(id, { isDeleted: true });
+
+    return res
+      .status(200)
+      .json({ status: "success", message: "Game Deleted Successfully!" });
   } catch (error) {
     console.error(error);
     return res
