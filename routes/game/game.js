@@ -360,7 +360,7 @@ router.put("/cancel/:id", verify, async (req, res) => {
  * Master Sheet
  */
 
-router.get("/master", verify, async (req, res) => {
+router.get("/master/sheet", verify, async (req, res) => {
   const day = parseInt(req.query.day);
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
