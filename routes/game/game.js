@@ -356,6 +356,37 @@ router.put("/cancel/:id", verify, async (req, res) => {
   }
 });
 
+/**
+ * Master Sheet
+ */
+
+router.get("/master", verify, async (req, res) => {
+  const day = parseInt(req.query.day);
+  const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit);
+
+  const startIndex = (page - 1) * limit;
+
+  try {
+    var gameData = await Game.find({
+      openDate: day,
+      isDeleted: false,
+    })
+      .sort({ openBiddingTime: "asc" })
+      .limit(limit)
+      .skip(startIndex);
+
+    return res
+      .status(200)
+      .json({ status: "success", games: gameData, day: day });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Some error occured", error: error });
+  }
+});
+
 //GETTING COMPLETED GAME (THIS ROUTE FOR USER)
 router.get("/completedUser/:userId", verify, async (req, res) => {});
 
