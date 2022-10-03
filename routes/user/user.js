@@ -19,6 +19,9 @@ const {
   mpinVerificationValidation,
 } = require("../../validation/user/user_validation");
 
+const verify = require("../../helpers/verification");
+const { default: mongoose } = require("mongoose");
+
 //Register the new Admin
 app.post("/register", async (req, res) => {
   const { error } = userRegisterationValidation(req.body);
@@ -244,6 +247,31 @@ app.post("/verify/mpin", async (req, res) => {
     .status(200)
     .header("auth-token", token)
     .json({ authToken: token, status: "success" });
+});
+
+//Getting user data
+app.get("/:id", verify, async (req, res) => {
+  const { id } = req.params;
+
+  // Verifing user id
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({ message: "Invalid user id" });
+  }
+
+  try {
+    var user = await User.findById(id).select(["-masterPassword"]);
+
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "User not found", status: "error" });
+    }
+
+    return res.status(200).json({ status: "success", user: user });
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ error: error });
+  }
 });
 
 module.exports = app;
