@@ -30,7 +30,19 @@ const userVerificationValidation = (data) => {
   return schema.validate(data);
 };
 
+//Verifying mpin
+
+const mpinVerificationValidation = (data) => {
+  const schema = Joi.object({
+    phoneNumber: Joi.string().length(10).required(),
+    mPin: Joi.string().length(4).required(),
+  });
+
+  return schema.validate(data);
+};
+
 //Exporting modules
 module.exports.userRegisterationValidation = userRegisterationValidation;
 module.exports.mpinCreationValidation = mpinCreationValidation;
 module.exports.userVerificationValidation = userVerificationValidation;
+module.exports.mpinVerificationValidation = mpinVerificationValidation;

@@ -16,6 +16,7 @@ const {
   userRegisterationValidation,
   mpinCreationValidation,
   userVerificationValidation,
+  mpinVerificationValidation,
 } = require("../../validation/user/user_validation");
 
 //Register the new Admin
@@ -182,6 +183,67 @@ app.post("/verify", async (req, res) => {
     console.error(error);
     return res.status(400).json({ error: error });
   }
+});
+
+//Verify Mpin and Login
+app.post("/verify/mpin", async (req, res) => {
+  const { error } = mpinVerificationValidation(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+
+  const { phoneNumber, mPin } = req.body;
+
+  //Checking for phone number is exists  or not
+  var phoneNumberStatus;
+  try {
+    phoneNumberStatus = await User.findOne({
+      phoneNumber: Number.parseInt(phoneNumber),
+    });
+
+    if (!phoneNumberStatus) {
+      return res.status(400).json({
+        status: "error",
+        message: "User not found! Please check the phone number",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ error: error });
+  }
+
+  // If user Exists
+  var completeMpin = phoneNumber + mPin;
+
+  //comparing two passwords one is user entered and another one is the actual password
+  const validPass = await bcrypt.compare(
+    completeMpin,
+    phoneNumberStatus.masterPassword
+  );
+
+  //If passwords do not match
+  if (!validPass) {
+    return res.status(400).json({ message: "Invalid mpin" });
+  }
+
+  //importing secret password
+  const secret = process.env.SECRET;
+
+  //Creating jwt
+  const token = jwt.sign(
+    {
+      id: phoneNumberStatus.id,
+      phoneNumber: phoneNumberStatus.phoneNumber,
+    },
+    secret,
+    { expiresIn: "7d" }
+  );
+
+  //returning succes with header auth-token
+  return res
+    .status(200)
+    .header("auth-token", token)
+    .json({ authToken: token, status: "success" });
 });
 
 module.exports = app;
