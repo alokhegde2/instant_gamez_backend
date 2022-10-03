@@ -2,17 +2,38 @@ const mongoose = require("mongoose");
 
 //User Schema
 const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
+  phoneNumber: {
+    type: Number,
     required: true,
-    min: 3,
-    max: 255,
+    min: 10,
   },
-  email: {
+  masterPassword: {
     type: String,
-    required: true,
-    min: 5,
-    max: 50,
+    default: "",
+  },
+  bankAccountNumber: {
+    type: String,
+    default: "",
+  },
+  bankIfscCode: {
+    type: String,
+    default: "",
+  },
+  bankBranch: {
+    type: String,
+    default: "",
+  },
+  bankAccountHolderName: {
+    type: String,
+    default: "",
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
+  moneyInWallet: {
+    type: Number,
+    default: 0,
   },
   createdDate: {
     type: Date,
