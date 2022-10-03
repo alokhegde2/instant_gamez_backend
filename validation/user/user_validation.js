@@ -4,7 +4,17 @@ const Joi = require("joi");
 
 const userRegisterationValidation = (data) => {
   const schema = Joi.object({
-    phoneNumber: Joi.number().min(10).required(),
+    phoneNumber: Joi.string().length(10).required(),
+  });
+
+  return schema.validate(data);
+};
+
+// Creating master password
+const mpinCreationValidation = (data) => {
+  const schema = Joi.object({
+    phoneNumber: Joi.string().length(10).required(),
+    mPin: Joi.string().length(4).required(),
   });
 
   return schema.validate(data);
@@ -12,3 +22,4 @@ const userRegisterationValidation = (data) => {
 
 //Exporting modules
 module.exports.userRegisterationValidation = userRegisterationValidation;
+module.exports.mpinCreationValidation = mpinCreationValidation;

@@ -25,7 +25,9 @@ app.post("/register", async (req, res) => {
   //Checking for phone number is already used or not
 
   try {
-    var phoneNumberStatus = await User.findOne({ phoneNumber: phoneNumber });
+    var phoneNumberStatus = await User.findOne({
+      phoneNumber: Number.parseInt(phoneNumber),
+    });
 
     if (phoneNumberStatus) {
       return res
@@ -38,7 +40,7 @@ app.post("/register", async (req, res) => {
   }
 
   let admin = new User({
-    phoneNumber: phoneNumber,
+    phoneNumber: Number.parseInt(phoneNumber),
   });
 
   try {
@@ -51,5 +53,53 @@ app.post("/register", async (req, res) => {
     res.status(400).json({ error: error });
   }
 });
+
+// Making phone number verified
+app.put("/verified/:phoneNumber", async (req, res) => {
+  const phoneNumber = req.params.phoneNumber;
+
+  if (phoneNumber.length !== 10) {
+    return res
+      .send(400)
+      .json({ status: "error", message: "Invalid phone number" });
+  }
+
+  //Checking for phone number is already used or not
+
+  try {
+    var phoneNumberStatus = await User.findOne({
+      phoneNumber: Number.parseInt(phoneNumber),
+    });
+
+    if (!phoneNumberStatus) {
+      return res.status(400).json({
+        status: "error",
+        message: "User not found! Please check the phone number",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ error: error });
+  }
+
+  // If user exists then update the user as verified
+
+  try {
+    await User.findOneAndUpdate(
+      { phoneNumber: Number.parseInt(phoneNumber) },
+      { isVerified: true }
+    );
+
+    return res
+      .status(200)
+      .json({ status: "success", message: "User verified" });
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ error: error });
+  }
+});
+
+// Creating the MPIN
+app.post("/mpin", async (req, res) => {});
 
 module.exports = app;
