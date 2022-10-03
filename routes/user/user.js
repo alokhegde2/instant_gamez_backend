@@ -215,6 +215,12 @@ app.post("/verify/mpin", async (req, res) => {
     return res.status(400).json({ error: error });
   }
 
+  if (phoneNumberStatus.isDeleted) {
+    return res
+      .status(400)
+      .json({ status: "error", message: "Your account is deleted!" });
+  }
+
   // If user Exists
   var completeMpin = phoneNumber + mPin;
 
@@ -268,6 +274,26 @@ app.get("/:id", verify, async (req, res) => {
     }
 
     return res.status(200).json({ status: "success", user: user });
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ error: error });
+  }
+});
+
+// Getting all the users
+app.get("/", verify, async (req, res) => {
+  const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit);
+
+  const startIndex = (page - 1) * limit;
+
+  try {
+    var users = await User.find({ isDeleted: false })
+      .sort({ createdDate: "asc" })
+      .limit(limit)
+      .skip(startIndex);
+
+    return res.status(200).json({ status: "success", users: users });
   } catch (error) {
     console.error(error);
     return res.status(400).json({ error: error });
