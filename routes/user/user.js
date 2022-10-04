@@ -21,6 +21,7 @@ const {
 
 const verify = require("../../helpers/verification");
 const { default: mongoose } = require("mongoose");
+const user = require("../../models/user/user");
 
 //Register the new Admin
 app.post("/register", async (req, res) => {
@@ -54,9 +55,10 @@ app.post("/register", async (req, res) => {
 
   try {
     savedAdmin = await admin.save();
-    return res
-      .status(200)
-      .json({ message: "Account created successfully! Please create mpin" });
+    return res.status(200).json({
+      status: "success",
+      message: "Account created successfully! Please create mpin",
+    });
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: error });
@@ -179,6 +181,13 @@ app.post("/verify", async (req, res) => {
       return res.status(400).json({
         status: "error",
         message: "User not found! Please check the phone number",
+      });
+    }
+
+    if (!phoneNumberStatus.isVerified) {
+      return res.status(400).json({
+        status: "error",
+        message: "Not Verified",
       });
     }
     return res.status(200).json({ status: "success", message: "User found" });
