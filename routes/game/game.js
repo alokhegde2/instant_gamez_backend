@@ -163,7 +163,50 @@ router.get("/current", verify, async (req, res) => {
       .limit(limit)
       .skip(startIndex);
 
-    return res.status(200).json({ status: "success", games: gameData });
+    var sortedGame = [];
+
+    //Check for close time
+    gameData.forEach((element) => {
+      var closeTime = new Date(element["closingBiddingTime"]);
+      var currentTime = new Date();
+
+      if (currentTime.getHours() == closeTime.getHours()) {
+        if (currentTime.getMinutes() > closeTime.getMinutes()) {
+          sortedGame.push(element);
+        }
+      } else if (currentTime.getHours() > closeTime.getHours()) {
+        sortedGame.push(element);
+      }
+    });
+
+    //Check for running bid
+    gameData.forEach((element) => {
+      var isFound = sortedGame.find((game) => game === element);
+      var closeTime = new Date(element["closingBiddingTime"]);
+      var openTime = new Date(element["openBiddingTime"]);
+      var currentTime = new Date();
+      if (!isFound) {
+        if (openTime.getHours() === currentTime.getHours()) {
+          if (openTime.getMinutes() < currentDate.getMinutes()) {
+            sortedGame.push(element);
+          }
+        } else if (openTime.getHours() < currentDate.getHours()) {
+          sortedGame.push(element);
+        }
+      }
+    });
+
+    //Check for open bid
+    gameData.forEach((element) => {
+      var isFound = sortedGame.find((game) => game === element);
+
+      if (!isFound) {
+        sortedGame.push(element);
+      }
+    });
+    sortedGame.reverse();
+
+    return res.status(200).json({ status: "success", games: sortedGame });
   } catch (error) {
     console.error(error);
     return res
