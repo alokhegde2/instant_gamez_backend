@@ -35,9 +35,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  moneyInWallet: {
-    type: Number,
-    default: 0,
+  wallet: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    ref: "wallets",
   },
   createdDate: {
     type: Date,
