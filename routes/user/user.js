@@ -274,7 +274,10 @@ app.get("/:id", verify, async (req, res) => {
   }
 
   try {
-    var user = await User.findById(id).select(["-masterPassword"]);
+    var user = await User.findById(id).select(["-masterPassword"]).populate({
+      path: "wallet",
+      strictPopulate: false,
+    });
 
     if (!user) {
       return res
@@ -285,7 +288,7 @@ app.get("/:id", verify, async (req, res) => {
     return res.status(200).json({ status: "success", user: user });
   } catch (error) {
     console.error(error);
-    return res.status(400).json({ error: error });
+    return res.status(400).json({ error: error, status: "error" });
   }
 });
 
@@ -305,7 +308,7 @@ app.get("/", verify, async (req, res) => {
     return res.status(200).json({ status: "success", users: users });
   } catch (error) {
     console.error(error);
-    return res.status(400).json({ error: error });
+    return res.status(400).json({ error: error, status: "error" });
   }
 });
 

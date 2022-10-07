@@ -52,6 +52,9 @@ const userRoute = require("./routes/user/user");
 // WALLET MODULE
 const walletRoute = require("./routes/wallet/wallet");
 
+// TRANSACTION MODULE
+const transactionRoute = require("./routes/wallet/transaction");
+
 // TRUNCATE MODULE
 const truncateRoute = require("./routes/others/truncate_db");
 
@@ -71,6 +74,9 @@ app.use(`${api}/user`, userRoute);
 
 // WALLET MODULE
 app.use(`${api}/wallet`, walletRoute);
+
+// TRANSACTION MODULE
+app.use(`${api}/transaction`, transactionRoute);
 
 // TRUCATING MODULE
 app.use(`${api}/truncate`, truncateRoute);
