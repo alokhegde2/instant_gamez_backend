@@ -39,6 +39,7 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: false,
     ref: "wallets",
+    default: "",
   },
   createdDate: {
     type: Date,

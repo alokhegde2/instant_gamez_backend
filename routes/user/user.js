@@ -276,7 +276,7 @@ app.get("/:id", verify, async (req, res) => {
   try {
     var user = await User.findById(id).select(["-masterPassword"]).populate({
       path: "wallet",
-      strictPopulate: false,
+      strictPopulate: true,
     });
 
     if (!user) {

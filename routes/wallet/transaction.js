@@ -28,7 +28,7 @@ app.get("/:id", verify, async (req, res) => {
 
   try {
     var transaction = await Transactions.find({ user: id })
-      .sort({ dateOfTransaction: "asc" })
+      .sort({ dateOfTransaction: -1 })
       .limit(limit)
       .skip(startIndex);
 
