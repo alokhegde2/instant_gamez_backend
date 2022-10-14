@@ -13,5 +13,19 @@ const gameValidation = (data) => {
   return schema.validate(data);
 };
 
+const biddingValidation = (data) => {
+  const schema = Joi.object({
+    gameId: Joi.string().required(),
+    userId: Joi.string().required(),
+    amount: Joi.number().required(),
+    biddingCategory: Joi.string().required(),
+    biddingOn: Joi.string().required(),
+    biddingNumber: Joi.number().required(),
+  });
+
+  return schema.validate(data);
+};
+
 //Exporting modules
 module.exports.gameValidation = gameValidation;
+module.exports.biddingValidation = biddingValidation;

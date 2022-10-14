@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router();
+const app = express();
 const mongoose = require("mongoose");
 
 // IMPORTING VERIFICATION MIDDLEWARE
@@ -11,12 +11,18 @@ require("dotenv/config");
 //IMPORTING MODEL
 const Game = require("../../models/game/game");
 const Result = require("../../models/game/result");
+const User = require("../../models/user/user");
+const Bidding = require("../../models/bidding/bidding");
 
 // IMPORTING VALIDATION
-const { gameValidation } = require("../../validation/game/game_validation");
+const {
+  gameValidation,
+  biddingValidation,
+} = require("../../validation/game/game_validation");
+const { createTransaction } = require("../../helpers/transactions");
 
 // GAME CREATION ROUTE
-router.post("/", verify, async (req, res) => {
+app.post("/", verify, async (req, res) => {
   //VALIDATING THE RECIVED FROM THE REQUEST
   const { error } = gameValidation(req.body);
   if (error) {
@@ -67,7 +73,7 @@ router.post("/", verify, async (req, res) => {
 // GETTING ALL GAMES
 // It gives the all the games and only todays result
 
-router.get("/", verify, async (req, res) => {
+app.get("/", verify, async (req, res) => {
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
 
@@ -117,7 +123,7 @@ router.get("/", verify, async (req, res) => {
 });
 
 //GETTING CURRENT GAMES
-router.get("/current", verify, async (req, res) => {
+app.get("/current", verify, async (req, res) => {
   var currentDate = new Date();
 
   var day = currentDate.getDay();
@@ -216,7 +222,7 @@ router.get("/current", verify, async (req, res) => {
 });
 
 //GETTING DISABLED GAMES
-router.get("/disabled", verify, async (req, res) => {
+app.get("/disabled", verify, async (req, res) => {
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
 
@@ -289,7 +295,7 @@ router.get("/disabled", verify, async (req, res) => {
 });
 
 //GETTING CANCELLED GAME
-router.get("/cancelled", verify, async (req, res) => {
+app.get("/cancelled", verify, async (req, res) => {
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
 
@@ -335,7 +341,7 @@ router.get("/cancelled", verify, async (req, res) => {
 });
 
 //GETTING SINGLE GAME
-router.get("/:id", verify, async (req, res) => {
+app.get("/:id", verify, async (req, res) => {
   const { id } = req.params;
 
   var currentDate = new Date();
@@ -370,7 +376,7 @@ router.get("/:id", verify, async (req, res) => {
 });
 
 // CANCELLING GAME
-router.put("/cancel/:id", verify, async (req, res) => {
+app.put("/cancel/:id", verify, async (req, res) => {
   const { id } = req.params;
 
   // VERIFYING GAME ID
@@ -403,7 +409,7 @@ router.put("/cancel/:id", verify, async (req, res) => {
  * Master Sheet
  */
 
-router.get("/master/sheet", verify, async (req, res) => {
+app.get("/master/sheet", verify, async (req, res) => {
   const day = parseInt(req.query.day);
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
@@ -434,7 +440,7 @@ router.get("/master/sheet", verify, async (req, res) => {
  * Delete the game
  */
 
-router.put("/delete/:id", verify, async (req, res) => {
+app.put("/delete/:id", verify, async (req, res) => {
   const { id } = req.params;
 
   // VERIFYING GAME ID
@@ -464,6 +470,75 @@ router.put("/delete/:id", verify, async (req, res) => {
 });
 
 //GETTING COMPLETED GAME (THIS ROUTE FOR USER)
-router.get("/completedUser/:userId", verify, async (req, res) => {});
+app.get("/completedUser/:userId", verify, async (req, res) => {});
 
-module.exports = router;
+//Bidding on the game
+app.post("/bid", verify, async (req, res) => {
+  const { gameId, userId, amount, biddingCategory, biddingOn, biddingNumber } =
+    req.body;
+
+  //VALIDATING THE RECIVED FROM THE REQUEST
+  const { error } = biddingValidation(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+
+  //check user id
+  if (!mongoose.isValidObjectId(userId)) {
+    return res.status(400).json({ message: "Invalid User Id" });
+  }
+
+  //Check the game id
+  if (!mongoose.isValidObjectId(gameId)) {
+    return res.status(400).json({ message: "Invalid Game Id" });
+  }
+
+  // Getting user data
+  var userStatus = await User.findById(userId);
+
+  if (!userStatus) {
+    return res.status(400).json({ message: "User not found" });
+  }
+
+  //Doing transaction
+  var transaction = await createTransaction(
+    userId,
+    amount,
+    "GamePlay",
+    userStatus.wallet,
+    gameId
+  );
+
+  if (transaction["status"] === "error") {
+    return res
+      .status(400)
+      .json({ message: "Unable to place the bid! Try again" });
+  }
+
+  //Write the logic to deduct the money
+
+  //Creating bid
+  var bid = new Bidding({
+    user: userId,
+    amountBidded: amount,
+    biddedCategory: biddingCategory,
+    biddingNumber: biddingNumber,
+    biddingOn: biddingOn,
+    createdDate: Date.now(),
+  });
+
+  // Save the bid details
+  try {
+    await bid.save();
+    return res
+      .status(200)
+      .json({ message: "Bid placed successfully", status: "success" });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Some error occured", error: error });
+  }
+});
+
+module.exports = app;
