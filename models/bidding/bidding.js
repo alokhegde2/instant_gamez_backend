@@ -33,6 +33,11 @@ const biddingSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  game: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: false,
+    ref: "Game",
+  },
   createdDate: {
     type: Date,
     default: Date.now(),

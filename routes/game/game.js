@@ -534,6 +534,7 @@ app.post("/bid", verify, async (req, res) => {
     biddedCategory: biddingCategory,
     biddingNumber: biddingNumber,
     biddingOn: biddingOn,
+    game: gameId,
     createdDate: Date.now(),
   });
 
@@ -566,6 +567,10 @@ app.get("/bid/:userId", verify, async (req, res) => {
   try {
     // Getting bid data
     var bids = await Bidding.find({ user: userId })
+      .populate({
+        path: "game",
+        strictPopulate: false,
+      })
       .sort({ createdDate: -1 })
       .limit(limit)
       .skip(startIndex);
