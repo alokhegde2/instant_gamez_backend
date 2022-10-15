@@ -20,6 +20,7 @@ const {
   biddingValidation,
 } = require("../../validation/game/game_validation");
 const { createTransaction } = require("../../helpers/transactions");
+const { walletDeduction } = require("../../helpers/wallet_deduction");
 
 // GAME CREATION ROUTE
 app.post("/", verify, async (req, res) => {
@@ -500,6 +501,17 @@ app.post("/bid", verify, async (req, res) => {
     return res.status(400).json({ message: "User not found" });
   }
 
+  //Write the logic to deduct the money
+  var walletDeductionStatus = await walletDeduction(
+    userId,
+    userStatus.wallet,
+    amount
+  );
+
+  if (walletDeductionStatus["status"] === "error") {
+    return res.status(400).json({ message: walletDeductionStatus["message"] });
+  }
+
   //Doing transaction
   var transaction = await createTransaction(
     userId,
@@ -514,8 +526,6 @@ app.post("/bid", verify, async (req, res) => {
       .status(400)
       .json({ message: "Unable to place the bid! Try again" });
   }
-
-  //Write the logic to deduct the money
 
   //Creating bid
   var bid = new Bidding({
@@ -533,6 +543,34 @@ app.post("/bid", verify, async (req, res) => {
     return res
       .status(200)
       .json({ message: "Bid placed successfully", status: "success" });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Some error occured", error: error });
+  }
+});
+
+//Bidding on the game
+app.get("/bid/:userId", verify, async (req, res) => {
+  const { userId } = req.params;
+  const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit);
+
+  const startIndex = (page - 1) * limit;
+
+  //check user id
+  if (!mongoose.isValidObjectId(userId)) {
+    return res.status(400).json({ message: "Invalid User Id" });
+  }
+  try {
+    // Getting bid data
+    var bids = await Bidding.find({ user: userId })
+      .sort({ createdDate: -1 })
+      .limit(limit)
+      .skip(startIndex);
+
+    return res.status(200).json({ status: "success", bids: bids });
   } catch (error) {
     console.error(error);
     return res
