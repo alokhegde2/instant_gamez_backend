@@ -10,7 +10,7 @@ const transactionSchema = new mongoose.Schema({
   amountOfTransaction: {
     type: Number,
     required: true,
-    min: 49,
+    min: 10,
   },
   typeOfTransaction: {
     type: String,
