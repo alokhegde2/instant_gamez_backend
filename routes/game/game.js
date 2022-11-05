@@ -73,8 +73,8 @@ app.post("/", verify, async (req, res) => {
 
 // GETTING ALL GAMES
 // It gives the all the games and only todays result
-
-app.get("/", verify, async (req, res) => {
+//TODO: Add verify
+app.get("/", async (req, res) => {
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
 
@@ -342,7 +342,8 @@ app.get("/cancelled", verify, async (req, res) => {
 });
 
 //GETTING SINGLE GAME
-app.get("/:id", verify, async (req, res) => {
+//TODO: Add verify
+app.get("/:id", async (req, res) => {
   const { id } = req.params;
 
   var currentDate = new Date();
