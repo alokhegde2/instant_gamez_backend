@@ -145,6 +145,7 @@ mongoose
     // + "/instant_gamez",
     {
       useNewUrlParser: true,
+      useUnifiedTopology:true,
     }
   )
   .then(() => {
