@@ -3,7 +3,7 @@ const app = express();
 const mongoose = require("mongoose");
 
 // IMPORTING VERIFICATION MIDDLEWARE
-const verify = require("../../helpers/verification");
+const {verify} = require("../../helpers/verification");
 
 //IMPORTING DOT ENV
 require("dotenv/config");

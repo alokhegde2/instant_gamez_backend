@@ -19,7 +19,7 @@ const {
   mpinVerificationValidation,
 } = require("../../validation/user/user_validation");
 
-const verify = require("../../helpers/verification");
+const {verify,verifyAdmin} = require("../../helpers/verification");
 const { default: mongoose } = require("mongoose");
 const user = require("../../models/user/user");
 
@@ -293,7 +293,7 @@ app.get("/:id", verify, async (req, res) => {
 });
 
 // Getting all the users
-app.get("/", verify, async (req, res) => {
+app.get("/", verifyAdmin, async (req, res) => {
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
 

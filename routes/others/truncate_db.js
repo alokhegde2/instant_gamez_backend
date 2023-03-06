@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const app = express();
 
 // IMPORTING VERIFICATION MIDDLEWARE
-const verify = require("../../helpers/verification");
+const {verify} = require("../../helpers/verification");
 
 //importing dot env
 require("dotenv/config");

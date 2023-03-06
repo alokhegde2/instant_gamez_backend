@@ -79,7 +79,7 @@ router.post("/login", async (req, res) => {
   }
 
   //importing secret password
-  const secret = process.env.SECRET;
+  const secret = process.env.SECRET_ADMIN;
 
   //Creating jwt
   const token = jwt.sign(
