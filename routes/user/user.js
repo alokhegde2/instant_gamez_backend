@@ -2,9 +2,6 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-//importing dot env
-require("dotenv/config");
-
 const app = express();
 
 //importing dot env

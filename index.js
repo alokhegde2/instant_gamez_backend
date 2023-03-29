@@ -55,6 +55,9 @@ const walletRoute = require("./routes/wallet/wallet");
 // TRANSACTION MODULE
 const transactionRoute = require("./routes/wallet/transaction");
 
+// Config Module
+const configRoute = require("./routes/app_configs/app_configs");
+
 // TRUNCATE MODULE
 const truncateRoute = require("./routes/others/truncate_db");
 
@@ -77,6 +80,9 @@ app.use(`${api}/wallet`, walletRoute);
 
 // TRANSACTION MODULE
 app.use(`${api}/transaction`, transactionRoute);
+
+// Config Module
+app.use(`${api}/config`, configRoute);
 
 // TRUCATING MODULE
 app.use(`${api}/truncate`, truncateRoute);
@@ -145,7 +151,7 @@ mongoose
     // + "/instant_gamez",
     {
       useNewUrlParser: true,
-      useUnifiedTopology:true,
+      useUnifiedTopology: true,
     }
   )
   .then(() => {

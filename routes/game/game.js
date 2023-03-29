@@ -3,7 +3,7 @@ const app = express();
 const mongoose = require("mongoose");
 
 // IMPORTING VERIFICATION MIDDLEWARE
-const {verify} = require("../../helpers/verification");
+const { verify, verifyAdmin } = require("../../helpers/verification");
 
 //IMPORTING DOT ENV
 require("dotenv/config");
@@ -583,6 +583,40 @@ app.get("/bid/:userId", verify, async (req, res) => {
       .status(500)
       .json({ status: "error", message: "Some error occured", error: error });
   }
+});
+
+//Getting anounced results (admin)
+app.get("/results", verifyAdmin, async (req, res) => {
+  //Check if the result documents for the games which are running today are created or not
+  //if documents are not created
+  //Get the games which are running today
+  //Create a results document for all the games which are running today
+  // return the created document back to the user as response and expand the game id
+});
+
+//Anouncing results
+
+app.post("/result", verifyAdmin, async (req, res) => {
+  //Data from body
+  const {
+    resultId,
+    gameId,
+    resultString,
+    resultType, //this should be open or close
+  } = req.body;
+
+  /*Create the result string
+    1. Get the result string by gettting the result document usinf resultId
+    2. Check if the result for [resultType] is anounced or not, if not
+    3. If [resultType]=open then append 4 charecter at first
+    4. If [resultType]=close then append 4 charecter at last
+  */
+
+  // Update the document with proper result string
+
+  // Once complete result is anounced get the winners
+
+  // Return the response
 });
 
 module.exports = app;
