@@ -24,6 +24,8 @@ const { walletDeduction } = require("../../helpers/wallet_deduction");
 const winner = require("../../models/game/winner");
 const { getWinners } = require("../../helpers/get_winners");
 const { Rollback, cancelGame } = require("../../helpers/rollback");
+const gameTrack = require("../../models/game/gameTrack");
+const result = require("../../models/game/result");
 
 // GAME CREATION ROUTE
 app.post("/", verify, async (req, res) => {
@@ -712,6 +714,36 @@ app.get("/lastRollback/:id", verifyAdmin, async (req, res) => {
 });
 app.get("/results/getGames", verifyAdmin, async (req, res) => {
   try {
+    // // get the current date and time
+    // const currentDate = new Date();
+
+    // // calculate the start and end dates for the current week (Monday to Saturday)
+    // const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 1));
+    // const endOfWeek = new Date(startOfWeek.getTime() + (6 * 24 * 60 * 60 * 1000));
+
+    // // loop over the days from Monday to Saturday
+    // for (let i = 1; i <= 6; i++) {
+    //   // calculate the date for the current day
+    //   const date = new Date(startOfWeek.getTime() + ((i - 1) * 24 * 60 * 60 * 1000));
+    //   const getDateGames = await Game.find({ openDate: i });
+    //   for (let j = 0; j < getDateGames.length; j++) {
+    //     const oldGame = getDateGames[j];
+    //     // calculate the new openBiddingTime and closingBiddingTime values for the current day
+    //     const openTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), oldGame.openBiddingTime.getHours(), oldGame.openBiddingTime.getMinutes(), oldGame.openBiddingTime.getSeconds());
+    //     const closeTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), oldGame.closingBiddingTime.getHours(), oldGame.closingBiddingTime.getMinutes(), oldGame.closingBiddingTime.getSeconds());
+    //     console.log(openTime + " " + closeTime)
+    //     // update the game record for the current day
+    //     await Game.findByIdAndUpdate(
+    //       oldGame._id,
+    //       { $set: { openBiddingTime: openTime, closingBiddingTime: closeTime } }
+    //     );
+    //   }
+    // }
+
+
+    // console.log('here')
+    // return;
+
     const { date } = req.query;
     let start, end;
     if (date) {
@@ -725,12 +757,47 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
       start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
       end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
     }
+    const gameIds = await gameTrack.find({ date: { $gte: start, $lte: end } }).distinct('gameId')
+    const gameResults = await Game.find({
+      _id: { $in: gameIds }
+    }).populate({
+      path: "results",
+      match: { isRollbacked: false },
+    });
+
+    const gameIdsWithoutResults = gameResults.filter(game => game.results.length === 0).map(game => { return { id: game._id, date: game.closingBiddingTime } });
+    // Games without results
+    await Promise.all(gameIdsWithoutResults.map(async (gameId) => {
+      const newResult = new Result({
+        anouncedDateTime: gameId.date,
+        resultString: "***-**-***",
+        gameId: gameId.id,
+      });
+      await newResult.save();
+      await Game.findByIdAndUpdate(gameId.id, { $push: { results: newResult._id } });
+    }));
+    // const newResults = gameIdsWithoutResults.map((gameId) => ({
+    //   anouncedDateTime: gameId.date,
+    //   resultString: "***-**-***",
+    //   gameId: gameId.id,
+    // }));
+    // console.log(newResults);
+    // if (newResults.length > 0) {
+    //   await Result.insertMany(newResults);
+    // }
     const gameQuery = {
-      openBiddingTime: { $gte: start },
-      closeBiddingTime: { $lte: end }
+      _id: { $in: gameIds },
+
+      // openBiddingTime: { $gte: start },
+      // closeBiddingTime: { $lte: end }
     };
-    const gameResults = await Game.find(gameQuery).populate('results');
-    return res.status(200).json({ status: "success", result: gameResults });
+    // const gameResults = await Game.find(gameQuery).populate('results');
+    const finalResult = await Game.find(gameQuery).populate({
+      path: "results",
+      match: { anouncedDateTime: { $gte: start, $lte: end }, isRollbacked: false },
+    });
+
+    return res.status(200).json({ status: "success", result: finalResult });
   } catch (err) {
     console.error(err);
     return res
