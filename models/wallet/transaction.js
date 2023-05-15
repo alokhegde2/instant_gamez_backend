@@ -13,7 +13,7 @@ const transactionSchema = new mongoose.Schema({
   },
   typeOfTransaction: {
     type: String,
-    enum: ["Deposit", "Withdraw", "GamePlay", "Winning", "Rollback", "Refund", "Bonus"],
+    enum: ["Deposit", "Withdraw", "GamePlay", "Winning", "Rollback", "Refund", "Bonus", "Refund Withdraw"],
     default: "Deposit",
   },
   wallet: {

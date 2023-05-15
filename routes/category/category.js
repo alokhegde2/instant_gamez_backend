@@ -66,7 +66,7 @@ router.get("/", verify, async (req, res) => {
       });
     }
 
-    // RETURN THE DATA
+    // RETURN THE DATA6
     return res
       .status(200)
       .json({ status: "success", categories: categoryData });

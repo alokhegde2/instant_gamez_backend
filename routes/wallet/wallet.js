@@ -147,7 +147,8 @@ app.post("/addMoney", verify.verify,
   });
 app.post("/withdrawMoney", verify.verify,
   async (req, res) => {
-    const { userId, amount } = req.body;
+    const { amount } = req.body;
+    const { id: userId } = req.user
     // Verifing user id
     if (!mongoose.isValidObjectId(userId)) {
       return res.status(400).json({ message: "Invalid user id" });
@@ -207,4 +208,93 @@ app.post("/withdrawMoney", verify.verify,
         .json({ status: "error", message: "Unable to add the game" });
     }
   });
+
+app.get("/getWithdrawRequest", verify.verifyAdmin,
+  async (req, res) => {
+    try {
+      const withdrawals = await withdrawalRequest.find({ isApprove: 0 }).populate({
+        path: 'userId',
+        select: 'phoneNumber',
+      }).populate({
+        path: 'walletId',
+        select: 'amountInWallet gameWinning withdraw',
+      });
+
+      return res.status(200).json({
+        status: "success",
+        data: withdrawals,
+        message: `withdrawal request found successfully`,
+      });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ status: "error", message: "Unable to found withdrawal request" });
+    }
+  });
+
+app.put("/getWithdrawRequest", verify.verifyAdmin,
+  async (req, res) => {
+    try {
+      const withdrawals = await withdrawalRequest.find({ isApprove: 0 }).populate({
+        path: 'userId',
+        select: 'phoneNumber',
+      }).populate({
+        path: 'walletId',
+        select: 'amountInWallet gameWinning withdraw',
+      });
+
+      return res.status(200).json({
+        status: "success",
+        data: withdrawals,
+        message: `withdrawal request found successfully`,
+      });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ status: "error", message: "Unable to found withdrawal request" });
+    }
+  });
+app.post('/updateWithdrawRequest', async (req, res) => {
+  try {
+    // Get the withdrawrequestId from the body
+    const { withdrawrequestId, status, description } = req.body
+    // Update the withdrawrequest status
+    // Update the withdrawal status
+    const withdrawRequestUpdate = await withdrawalRequest.findByIdAndUpdate(withdrawrequestId,
+      {
+        isApprove: status,
+        description: description
+      });
+    if (status == 1) {
+      await Wallet.findByIdAndUpdate(withdrawRequestUpdate.walletId, {
+        $inc: {
+          withdrawGame: withdrawRequestUpdate.amount,
+          withdraw: -withdrawRequestUpdate.amount
+        }
+      })
+    } else if (status == 2) {
+      await Wallet.findByIdAndUpdate(withdrawRequestUpdate.walletId, {
+        $inc: {
+          gameWinning: withdrawRequestUpdate.amount,
+          withdraw: -withdrawRequestUpdate.amount
+        }
+      })
+      await createTransaction(withdrawRequestUpdate.userId, withdrawRequestUpdate.amount, "Refund Withdraw", withdrawRequestUpdate.walletId);
+
+    }
+    // Successfully update the withdrawrequest status
+    res.status(200).json({
+      message: 'Withdrawrequest status successfully updated',
+    });
+  } catch (error) {
+    // Handle the error
+    console.log(error);
+    res.status(500).json({
+      message: 'An error occurred while updating the withdrawal status',
+    });
+  }
+});
+
 module.exports = app;

@@ -407,7 +407,7 @@ app.put("/cancel/:id", verify, async (req, res) => {
         .json({ status: "error", message: "Game not found" });
     }
     // 
-    await cancelGame(id)
+    await cancelGame(id, start, end)
     return res
       .status(200)
       .json({ status: "success", message: "Game Cancelled Successfully!" });
@@ -640,7 +640,7 @@ app.post("/result_old", verifyAdmin, async (req, res) => {
 });
 app.post("/result", verifyAdmin, async (req, res) => {
   try {
-    const { gameId, resultId, resultString } = req.body;
+    const { gameId, resultId, resultString, start, end } = req.body;
     if (!mongoose.isValidObjectId(gameId)) {
       return res.status(400).json({ message: "Invalid Game Id" });
     }
@@ -648,19 +648,19 @@ app.post("/result", verifyAdmin, async (req, res) => {
 
       return res.status(400).json({ message: "Invalid Result String" });
     }
-    // Find the latest result for the game that has not been rolled back
-    let result = await Result.findOne({
-      gameId: mongoose.Types.ObjectId(gameId),
-      isRollbacked: false,
-    }).sort({ anouncedDateTime: -1 });
 
+    // Find the latest result for the game that has not been rolled back
+    let result = await Result.findOne({ _id: new mongoose.Types.ObjectId(resultId) }).sort({ anouncedDateTime: -1 });
+    console.log(result)
     if (result) {
+      console.log("result created")
       if (result.resultString == resultString) {
         return res.status(304).json({ message: "result is not changed" });
       }
       result.resultString = resultString;
       result = await result.save();
     } else {
+      console.log("result not created")
       // If there is no existing result, create a new result
       result = new Result({
         gameId,
@@ -676,7 +676,7 @@ app.post("/result", verifyAdmin, async (req, res) => {
     const resultCategory = parseMainString(resultString);
 
     // Call getWinners in the background
-    Promise.all([getWinners(gameId, resultCategory, result._id)]);
+    Promise.all([getWinners(gameId, resultCategory, result._id, start, end)]);
 
     return res.status(200).json({ status: "success", result: result });
   } catch (err) {
@@ -722,10 +722,11 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
     // const endOfWeek = new Date(startOfWeek.getTime() + (6 * 24 * 60 * 60 * 1000));
 
     // // loop over the days from Monday to Saturday
-    // for (let i = 1; i <= 6; i++) {
+    // for (let i = 0; i <= 6; i++) {
     //   // calculate the date for the current day
     //   const date = new Date(startOfWeek.getTime() + ((i - 1) * 24 * 60 * 60 * 1000));
-    //   const getDateGames = await Game.find({ openDate: i });
+    //   console.log(date)
+    //   const getDateGames = await Game.find({ openDate: date.getDay() });
     //   for (let j = 0; j < getDateGames.length; j++) {
     //     const oldGame = getDateGames[j];
     //     // calculate the new openBiddingTime and closingBiddingTime values for the current day
@@ -757,16 +758,46 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
       start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
       end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
     }
+    console.log(start + "  " + end)
     const gameIds = await gameTrack.find({ date: { $gte: start, $lte: end } }).distinct('gameId')
-    const gameResults = await Game.find({
-      _id: { $in: gameIds }
-    }).populate({
-      path: "results",
-      match: { isRollbacked: false },
-    });
+    // const gameResults = await Game.find({
 
+    // }).populate({
+    //   path: "results",
+    //   match: { isRollbacked: false },
+    // });
+    console.log(gameIds)
+    const gameResults = await Game.aggregate([
+      { $match: { _id: { $in: gameIds } } },
+      {
+        $lookup: {
+          from: "results",
+          let: { gameId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$gameId", "$$gameId"] },
+                    { $gte: ["$anouncedDateTime", start] },
+                    { $lte: ["$anouncedDateTime", end] },
+                    { $eq: ["$isRollbacked", false] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "results"
+        }
+      }
+    ]);
+
+    console.log(gameIds)
+    console.log(gameResults)
     const gameIdsWithoutResults = gameResults.filter(game => game.results.length === 0).map(game => { return { id: game._id, date: game.closingBiddingTime } });
+
     // Games without results
+    console.log(gameIdsWithoutResults)
     await Promise.all(gameIdsWithoutResults.map(async (gameId) => {
       const newResult = new Result({
         anouncedDateTime: gameId.date,
@@ -785,19 +816,108 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
     // if (newResults.length > 0) {
     //   await Result.insertMany(newResults);
     // }
+    // const gameQuery = {
+    //   _id: { $in: gameIds },
+
+    //   // openBiddingTime: { $gte: start },
+    //   // closeBiddingTime: { $lte: end }
+    // };
+    // // const gameResults = await Game.find(gameQuery).populate('results');
+    // const finalResult = await Game.find(gameQuery).populate({
+    //   path: "results",
+    //   match: { anouncedDateTime: { $gte: start, $lte: end }, isRollbacked: false },
+    // });
     const gameQuery = {
-      _id: { $in: gameIds },
-
-      // openBiddingTime: { $gte: start },
-      // closeBiddingTime: { $lte: end }
+      _id: { $in: gameIds }
     };
-    // const gameResults = await Game.find(gameQuery).populate('results');
-    const finalResult = await Game.find(gameQuery).populate({
-      path: "results",
-      match: { anouncedDateTime: { $gte: start, $lte: end }, isRollbacked: false },
-    });
 
-    return res.status(200).json({ status: "success", result: finalResult });
+    const finalResult = await Game.aggregate([
+      { $match: gameQuery },
+      {
+        $lookup: {
+          from: "results",
+          let: { gameId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$gameId", "$$gameId"] },
+                    { $gte: ["$anouncedDateTime", start] },
+                    { $lte: ["$anouncedDateTime", end] },
+                    { $eq: ["$isRollbacked", false] }
+                  ]
+                }
+              }
+            },
+            {
+              $addFields: {
+                id: "$_id"
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                __v: 0
+              }
+            }
+          ],
+          as: "results"
+        }
+      },
+      {
+        // Add a new field 'openBiddingTimeGmt530' with the converted time
+        $addFields: {
+          openBiddingTimeGmt530: {
+            $dateToString: {
+              date: {
+                $dateFromParts: {
+                  timezone: "+05:30",
+                  year: { $year: "$openBiddingTime" },
+                  month: { $month: "$openBiddingTime" },
+                  day: { $dayOfMonth: "$openBiddingTime" },
+                  hour: { $hour: "$openBiddingTime" },
+                  minute: { $minute: "$openBiddingTime" },
+                  second: { $second: "$openBiddingTime" },
+                  millisecond: { $millisecond: "$openBiddingTime" }
+                }
+              },
+              format: "%H:%M"
+            }
+          },
+          closingBiddingTimeGmt530: {
+            $dateToString: {
+              date: {
+                $dateFromParts: {
+                  timezone: "+05:30",
+                  year: { $year: "$closingBiddingTime" },
+                  month: { $month: "$closingBiddingTime" },
+                  day: { $dayOfMonth: "$closingBiddingTime" },
+                  hour: { $hour: "$closingBiddingTime" },
+                  minute: { $minute: "$closingBiddingTime" },
+                  second: { $second: "$closingBiddingTime" },
+                  millisecond: { $millisecond: "$closingBiddingTime" }
+                }
+              },
+              format: "%H:%M"
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          id: "$_id"
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          __v: 0
+        }
+      }
+    ]);
+
+    return res.status(200).json({ status: "success", start: start, end: end, result: finalResult });
   } catch (err) {
     console.error(err);
     return res

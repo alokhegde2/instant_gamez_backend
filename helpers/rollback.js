@@ -44,17 +44,17 @@ exports.Rollback = async (resultId) => {
         });
         await transactionSchema.insertMany(transaction)
         await Promise.all(walletDeductions);
+        console.log("res id "+res._id)
         return result.findByIdAndUpdate(res._id, { isRollbacked: true, rollbackedDateTime: Date.now() });
     });
 
     await Promise.all(updateResults);
 };
-exports.cancelGame = async (gameId) => {
+exports.cancelGame = async (gameId, start, end) => {
     const transaction = []
     let getGame = await game.findById(gameId);
     if (getGame != undefined && getGame != null) {
-        let start = new Date(getGame.openBiddingTime.setHours(0, 0, 0, 0));
-        let end = new Date(getGame.closingBiddingTime.setHours(23, 59, 59, 999));
+        ;
         // console.log(new Date("2022-11-06T14:14:15.756+00:00"))
         // console.log(start + "  " + end)
         const getResults = await bidding.aggregate([

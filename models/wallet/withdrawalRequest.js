@@ -12,13 +12,17 @@ const withdrawalRequest = new mongoose.Schema({
         required: true,
         ref: "wallets",
     },
+    description: {
+        type: String,
+        default: ""
+    },
     amount: {
         type: Number,
         default: 10
     },
     isApprove: {
-        type: Boolean,
-        default: false
+        type: Number,
+        default: 0
     }
 }, { timestamps: true });
 
