@@ -148,8 +148,8 @@ socketIO.on("connection", (socket) => {
 // Connecting to mongodb database
 mongoose
   .connect(
-    process.env.DEV_DATABASE,
-    // + "/instant_gamez",
+    process.env.ENVIRONMENT == undefined ? process.env.DATABASE : process.env.DEV_DATABASE
+      + "/instant_gamez",
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,
