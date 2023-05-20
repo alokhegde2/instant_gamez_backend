@@ -146,6 +146,7 @@ socketIO.on("connection", (socket) => {
 });
 
 // Connecting to mongodb database
+console.log(process.env.ENVIRONMENT == undefined ? process.env.DATABASE : process.env.DEV_DATABASE)
 mongoose
   .connect(
     process.env.ENVIRONMENT == undefined ? process.env.DATABASE : process.env.DEV_DATABASE
