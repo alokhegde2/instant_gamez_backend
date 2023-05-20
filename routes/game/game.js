@@ -390,8 +390,8 @@ app.get("/:id", async (req, res) => {
 });
 
 // CANCELLING GAME
-app.put("/cancel/:id", verify, async (req, res) => {
-  const { id } = req.params;
+app.post("/cancel", verify, async (req, res) => {
+  const { id, start, end } = req.body;
 
   // VERIFYING GAME ID
   if (!mongoose.isValidObjectId(id)) {
@@ -399,18 +399,27 @@ app.put("/cancel/:id", verify, async (req, res) => {
   }
 
   try {
-    var gameData = await Game.findById(id);
+    console.log(id)
+    // var gameData = await Game.findById(id);
 
-    if (gameData === null) {
+    // if (gameData === null) {
+    //   return res
+    //     .status(400)
+    //     .json({ status: "error", message: "Game not found" });
+    // }
+    let findResult = await Result.findById(id);
+    if (findResult != undefined && findResult != null) {
+      await cancelGame(findResult.gameId, start, end)
+      findResult.isCancelled = true;
+      await findResult.save();
       return res
-        .status(400)
-        .json({ status: "error", message: "Game not found" });
+        .status(200)
+        .json({ status: "success", message: "Game Cancelled Successfully!" });
     }
-    // 
-    await cancelGame(id, start, end)
     return res
       .status(200)
-      .json({ status: "success", message: "Game Cancelled Successfully!" });
+      .json({ status: "error", message: "Game cannot cance!" });
+
   } catch (error) {
     console.error(error);
     return res
@@ -868,39 +877,77 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
       {
         // Add a new field 'openBiddingTimeGmt530' with the converted time
         $addFields: {
+          // Add a new field called formattedDate that is the formatted string of createdAt
           openBiddingTimeGmt530: {
-            $dateToString: {
-              date: {
-                $dateFromParts: {
-                  timezone: "+05:30",
-                  year: { $year: "$openBiddingTime" },
-                  month: { $month: "$openBiddingTime" },
-                  day: { $dayOfMonth: "$openBiddingTime" },
-                  hour: { $hour: "$openBiddingTime" },
-                  minute: { $minute: "$openBiddingTime" },
-                  second: { $second: "$openBiddingTime" },
-                  millisecond: { $millisecond: "$openBiddingTime" }
+            // Use $concat to join multiple strings
+            $concat: [
+              // Use $dateToString to get the hour and minute
+              {
+                $dateToString: {
+                  date: "$openBiddingTime",
+                  // The format string specifies how to display the hour and minute
+                  // %I is the hour in 12-hour clock, %M is the minute
+                  format: "%H:%M",
+                  // The timezone specifies the offset from UTC
+                  // Indian Standard Time is UTC+05:30
+                  timezone: "+05:30"
                 }
               },
-              format: "%H:%M"
-            }
-          },
+              // Add a space between the time and AM/PM
+              " ",
+              // Use $cond to check if the hour is less than 12
+              {
+                $cond: [
+                  {
+                    $lt: [
+                      // Use $hour to get the hour part of the date
+                      { $hour: { date: "$openBiddingTime", timezone: "+05:30" } },
+                      12
+                    ]
+                  },
+                  // If true, append "AM"
+                  "AM",
+                  // If false, append "PM"
+                  "PM"
+                ]
+              }
+            ]
+          }
+          ,
           closingBiddingTimeGmt530: {
-            $dateToString: {
-              date: {
-                $dateFromParts: {
-                  timezone: "+05:30",
-                  year: { $year: "$closingBiddingTime" },
-                  month: { $month: "$closingBiddingTime" },
-                  day: { $dayOfMonth: "$closingBiddingTime" },
-                  hour: { $hour: "$closingBiddingTime" },
-                  minute: { $minute: "$closingBiddingTime" },
-                  second: { $second: "$closingBiddingTime" },
-                  millisecond: { $millisecond: "$closingBiddingTime" }
+            // Use $concat to join multiple strings
+            $concat: [
+              // Use $dateToString to get the hour and minute
+              {
+                $dateToString: {
+                  date: "$openBiddingTime",
+                  // The format string specifies how to display the hour and minute
+                  // %I is the hour in 12-hour clock, %M is the minute
+                  format: "%H:%M",
+                  // The timezone specifies the offset from UTC
+                  // Indian Standard Time is UTC+05:30
+                  timezone: "+05:30"
                 }
               },
-              format: "%H:%M"
-            }
+              // Add a space between the time and AM/PM
+              " ",
+              // Use $cond to check if the hour is less than 12
+              {
+                $cond: [
+                  {
+                    $lt: [
+                      // Use $hour to get the hour part of the date
+                      { $hour: { date: "$openBiddingTime", timezone: "+05:30" } },
+                      12
+                    ]
+                  },
+                  // If true, append "AM"
+                  "AM",
+                  // If false, append "PM"
+                  "PM"
+                ]
+              }
+            ]
           }
         }
       },
@@ -956,11 +1003,6 @@ function parseMainString(mainString) {
       cat: 'Single Pana',
       type: 'Close',
       result: close
-    },
-    {
-      cat: 'Single Pana',
-      type: 'Open',
-      result: open
     },
     {
       cat: 'Double Pana',

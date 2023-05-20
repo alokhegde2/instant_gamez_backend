@@ -18,6 +18,10 @@ const resultSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isCancelled: {
+    type: Boolean,
+    default: false,
+  },
   rollbackedDateTime: {
     type: Date,
     default: null,

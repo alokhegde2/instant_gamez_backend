@@ -87,7 +87,7 @@ const wallet = require("../models/wallet/wallet");
 //     await wallet.findByIdAndUpdate(element.walletId, { $inc: { amountInWallet: element.amount }, lastAmountAdded: Date.now() }, { new: true })
 //   })
 // };
-const getWinners = async (gameId, results, resultId,start,end) => {
+const getWinners = async (gameId, results, resultId, start, end) => {
   // First get the game data using [gameId]
   // Get the result data using [resultId]
   //Get sigle open winning number

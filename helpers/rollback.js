@@ -44,7 +44,7 @@ exports.Rollback = async (resultId) => {
         });
         await transactionSchema.insertMany(transaction)
         await Promise.all(walletDeductions);
-        console.log("res id "+res._id)
+        console.log("res id " + res._id)
         return result.findByIdAndUpdate(res._id, { isRollbacked: true, rollbackedDateTime: Date.now() });
     });
 
@@ -54,7 +54,7 @@ exports.cancelGame = async (gameId, start, end) => {
     const transaction = []
     let getGame = await game.findById(gameId);
     if (getGame != undefined && getGame != null) {
-        ;
+
         // console.log(new Date("2022-11-06T14:14:15.756+00:00"))
         // console.log(start + "  " + end)
         const getResults = await bidding.aggregate([

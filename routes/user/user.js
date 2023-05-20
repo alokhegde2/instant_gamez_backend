@@ -55,13 +55,15 @@ app.post("/register", async (req, res) => {
 
   try {
     savedAdmin = await admin.save();
-    await new offerSchema({
-      userId: admin._id
-    }).save();
-    await new referralSchema({
-      from: referralUserId,
-      to: admin._id
-    }).save();
+    if (referralUserId != undefined) {
+      await new offerSchema({
+        userId: admin._id
+      }).save();
+      await new referralSchema({
+        from: referralUserId,
+        to: admin._id
+      }).save();
+    }
     return res.status(200).json({
       status: "success",
       message: "Account created successfully! Please create mpin",
