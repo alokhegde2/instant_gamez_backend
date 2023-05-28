@@ -391,7 +391,7 @@ app.get("/:id", async (req, res) => {
 
 // CANCELLING GAME
 app.post("/cancel", verify, async (req, res) => {
-  const { id, start, end } = req.body;
+  const { id, date } = req.body;
 
   // VERIFYING GAME ID
   if (!mongoose.isValidObjectId(id)) {
@@ -400,6 +400,10 @@ app.post("/cancel", verify, async (req, res) => {
 
   try {
     console.log(id)
+
+    const givenDate = new Date(date); // Note the YYYY-MM-DD format
+    start = new Date(givenDate.getFullYear(), givenDate.getMonth(), givenDate.getDate(), 0, 0, 0);
+    end = new Date(givenDate.getFullYear(), givenDate.getMonth(), givenDate.getDate(), 23, 59, 59);
     // var gameData = await Game.findById(id);
 
     // if (gameData === null) {
@@ -920,7 +924,7 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
               // Use $dateToString to get the hour and minute
               {
                 $dateToString: {
-                  date: "$openBiddingTime",
+                  date: "$closingBiddingTime",
                   // The format string specifies how to display the hour and minute
                   // %I is the hour in 12-hour clock, %M is the minute
                   format: "%H:%M",

@@ -51,6 +51,7 @@ exports.Rollback = async (resultId) => {
     await Promise.all(updateResults);
 };
 exports.cancelGame = async (gameId, start, end) => {
+    console.log(gameId + start + end)
     const transaction = []
     let getGame = await game.findById(gameId);
     if (getGame != undefined && getGame != null) {
@@ -75,6 +76,7 @@ exports.cancelGame = async (gameId, start, end) => {
                 },
             },
         ]);
+        console.log(getResults)
         // console.log(getResults)
         const updateResults = getResults.map(async (res) => {
             if (res.usersData.length > 0) {

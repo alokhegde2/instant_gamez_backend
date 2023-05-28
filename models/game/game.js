@@ -51,7 +51,7 @@ gameSchema.post(["save", "findOneAndUpdate", "updateOne"], async function (doc, 
   const start = new Date(datetime.getFullYear(), datetime.getMonth(), datetime.getDate(), 0, 0, 0);
   const end = new Date(datetime.getFullYear(), datetime.getMonth(), datetime.getDate(), 23, 59, 59);
 
-  let checkGame = await gameTrack.find({ date: { $gte: start, $lte: end }, gameId: doc._id });
+  let checkGame = await gameTrack.find({ date: { $ne: doc.closingBiddingTime }, gameId: doc._id });
   if (checkGame.length == 0) await gameTrack({ date: doc.closingBiddingTime, gameId: doc._id }).save();
 
   next();
