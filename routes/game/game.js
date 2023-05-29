@@ -727,7 +727,7 @@ app.get("/lastRollback/:id", verifyAdmin, async (req, res) => {
 });
 app.get("/results/getGames", verifyAdmin, async (req, res) => {
   try {
-    // // get the current date and time
+    // // // get the current date and time
     // const currentDate = new Date();
 
     // // calculate the start and end dates for the current week (Monday to Saturday)
@@ -735,7 +735,7 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
     // const endOfWeek = new Date(startOfWeek.getTime() + (6 * 24 * 60 * 60 * 1000));
 
     // // loop over the days from Monday to Saturday
-    // for (let i = 0; i <= 6; i++) {
+    // for (let i = 0; i <= 1; i++) {
     //   // calculate the date for the current day
     //   const date = new Date(startOfWeek.getTime() + ((i - 1) * 24 * 60 * 60 * 1000));
     //   console.log(date)
@@ -770,6 +770,19 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
       const today = new Date();
       start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
       end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    }
+    const getDateGames = await Game.find({ openDate: end.getDay() });
+    for (let j = 0; j < getDateGames.length; j++) {
+      const oldGame = getDateGames[j];
+      // calculate the new openBiddingTime and closingBiddingTime values for the current day
+      const openTime = new Date(end.getFullYear(), end.getMonth(), end.getDate(), oldGame.openBiddingTime.getHours(), oldGame.openBiddingTime.getMinutes(), oldGame.openBiddingTime.getSeconds());
+      const closeTime = new Date(end.getFullYear(), end.getMonth(), end.getDate(), oldGame.closingBiddingTime.getHours(), oldGame.closingBiddingTime.getMinutes(), oldGame.closingBiddingTime.getSeconds());
+      console.log(openTime + " " + closeTime)
+      // update the game record for the current day
+      await Game.findByIdAndUpdate(
+        oldGame._id,
+        { $set: { openBiddingTime: openTime, closingBiddingTime: closeTime } }
+      );
     }
     console.log(start + "  " + end)
     const gameIds = await gameTrack.find({ date: { $gte: start, $lte: end } }).distinct('gameId')
