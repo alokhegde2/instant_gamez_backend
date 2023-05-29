@@ -37,6 +37,7 @@ exports.Rollback = async (resultId) => {
                     { $inc: { gameWinning: -win.wonAmount } },
                     { new: true }
                 );
+                await bidding.findByIdAndUpdate(win.bidId, { isWinner: 0 }, { new: true })
                 return walletDeduct;
             } catch (error) {
                 console.error(error);
@@ -92,6 +93,11 @@ exports.cancelGame = async (gameId, start, end) => {
                 const walletIncrement = await wallet.findOneAndUpdate(
                     { _id: mongoose.Types.ObjectId(res.usersData[0].wallet) },
                     { $inc: { amountInWallet: res.amountBidded } },
+                    { new: true }
+                );
+                await bidding.findByIdAndUpdate(
+                    res._id,
+                    { isWinner: 4 },
                     { new: true }
                 );
                 return walletIncrement;

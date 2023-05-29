@@ -52,6 +52,10 @@ const winnerSchema = new mongoose.Schema({
     type: Date,
     default: Date.now(),
   },
+  bidId: {
+    type: mongoose.Types.ObjectId,
+    ref: "biddings"
+  }
 });
 winnerSchema.pre("save", async function (next) {
   try {

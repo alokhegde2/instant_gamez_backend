@@ -105,7 +105,7 @@ const getWinners = async (gameId, results, resultId, start, end) => {
   const winners = [];
   const transaction = [];
   const walletAmount = [];
-
+  const biddings = [];
   for (const result of results) {
     console.log(result)
     console.log(result.cat + "  " + result.type + "  " + result.result)
@@ -117,6 +117,9 @@ const getWinners = async (gameId, results, resultId, start, end) => {
               game: mongoose.Types.ObjectId(gameId)
             },
             { biddedCategory: result.cat },
+            {
+              isWinner: 0
+            },
             {
               biddingOn: result.type
             }, { biddingNumber: result.result }
@@ -144,6 +147,7 @@ const getWinners = async (gameId, results, resultId, start, end) => {
             resultId: resultId,
             userId: bid.user,
             gameId: gameId,
+            bidId: bid._id,
             winningCategory: result.cat,
             wonNumber: result.result,
             wonAmount: wonAmount,
@@ -161,6 +165,7 @@ const getWinners = async (gameId, results, resultId, start, end) => {
             amount: wonAmount,
             walletId: bid.userData[0].wallet
           });
+          biddings.push(bid._id)
         }
       }
     }
@@ -171,6 +176,9 @@ const getWinners = async (gameId, results, resultId, start, end) => {
   await Promise.all(
     walletAmount.map(async (element) => {
       await wallet.findByIdAndUpdate(element.walletId, { $inc: { gameWinning: element.amount }, lastAmountAdded: Date.now() }, { new: true })
+    }),
+    biddings.map(async (b) => {
+      await bidding.findByIdAndUpdate(b, { isWinner: 1 });
     })
   );
   console.log('winner announced')

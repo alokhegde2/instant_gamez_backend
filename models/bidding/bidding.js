@@ -42,6 +42,10 @@ const biddingSchema = new mongoose.Schema({
     type: Date,
     default: Date.now(),
   },
+  isWinner: {
+    type: Number,
+    default: 0
+  }
 });
 
 //Creating virtual id
