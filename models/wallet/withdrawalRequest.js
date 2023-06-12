@@ -20,6 +20,14 @@ const withdrawalRequest = new mongoose.Schema({
         type: Number,
         default: 10
     },
+    deduction: {
+        type: Number,
+        default: 0
+    },
+    payableAmount: {
+        type: Number,
+        default: 0
+    },
     isApprove: {
         type: Number,
         default: 0

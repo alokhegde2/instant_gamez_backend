@@ -26,6 +26,7 @@ const { getWinners } = require("../../helpers/get_winners");
 const { Rollback, cancelGame } = require("../../helpers/rollback");
 const gameTrack = require("../../models/game/gameTrack");
 const result = require("../../models/game/result");
+const bidding = require("../../models/bidding/bidding");
 
 // GAME CREATION ROUTE
 app.post("/", verify, async (req, res) => {
@@ -690,6 +691,21 @@ app.post("/result", verifyAdmin, async (req, res) => {
 
     // Call getWinners in the background
     Promise.all([getWinners(gameId, resultCategory, result._id, start, end)]);
+    if (!resultString.includes("*")) {
+      const getBiddings = await bidding.updateMany(
+        {
+          game: mongoose.Types.ObjectId(gameId),
+          isWinner: 0,
+          createdDate: {
+            $gte: start,
+            $lt: end
+          }
+        },
+        {
+          isWinner: 2
+        }
+      );
+    }
 
     return res.status(200).json({ status: "success", result: result });
   } catch (err) {
@@ -702,14 +718,14 @@ app.post("/result", verifyAdmin, async (req, res) => {
 
 app.post("/rollback", verifyAdmin, async (req, res) => {
   try {
-    const { resultId } = req.body;
+    const { resultId, type } = req.body;
     if (!mongoose.isValidObjectId(resultId)) {
       return res.status(400).json({ message: "Invalid Game Id" });
     }
+    console.log(resultId + "  " + type)
+    // let rollbackIs = Promise.all([Rollback(resultId, type)]);
 
-    let rollbackIs = Promise.all([Rollback(resultId)]);
-
-    return res.status(200).json({ status: "success", result: rollbackIs });
+    return res.status(200).json({ status: "success", result: "rollbackIs" });
   } catch (err) {
     console.error(err);
     return res
@@ -999,62 +1015,74 @@ function parseMainString(mainString) {
     {
       cat: 'Single',
       type: 'Open',
-      result: middle.charAt(0)
+      result: middle.charAt(0),
+      indicator: 0
     },
     {
       cat: 'Single',
       type: 'Close',
-      result: middle.charAt(1)
+      result: middle.charAt(1),
+      indicator: 1
     },
     {
       cat: 'Jodi',
       type: 'Open',
-      result: middle
+      result: middle,
+      indicator: 2
     },
     {
       cat: 'Single Pana',
       type: 'Open',
-      result: open
+      result: open,
+      indicator: 0
     },
     {
       cat: 'Single Pana',
       type: 'Close',
-      result: close
+      result: close,
+      indicator: 1
     },
     {
       cat: 'Double Pana',
       type: 'Open',
-      result: open
+      result: open,
+      indicator: 0
     },
     {
       cat: 'Double Pana',
       type: 'Close',
-      result: close
+      result: close,
+      indicator: 1
     },
     {
       cat: 'Triple Pana',
       type: 'Open',
-      result: open
+      result: open,
+      indicator: 0
     },
     {
       cat: 'Triple Pana',
       type: 'Close',
-      result: close
+      result: close,
+      indicator: 1
     },
     {
       cat: 'Half Sangam',
       type: 'Open',
-      result: halfSangam1
+      result: halfSangam1,
+      indicator: 2
     },
     {
       cat: 'Half Sangam',
       type: 'Close',
-      result: halfSangam2
+      result: halfSangam2,
+      indicator: 2
     },
     {
       cat: 'Full Sangam',
       type: 'Open',
-      result: fullSangam
+      result: fullSangam,
+      indicator: 2
     }];
 
   //rollback previous winner

@@ -7,7 +7,14 @@ const wallet = require("../models/wallet/wallet");
 const { walletDeduction } = require("./wallet_deduction");
 
 const transactionSchema = require('../models/wallet/transaction');
-exports.Rollback = async (resultId) => {
+exports.Rollback = async (resultId, type) => {
+    let winnerselect = []
+    if (type == 1) {
+        winnerselect = [0, 2]
+    }
+    else {
+        winnerselect = [1, 2]
+    }
     console.log(resultId)
     const transaction = []
     const getResults = await result.aggregate([
@@ -15,16 +22,25 @@ exports.Rollback = async (resultId) => {
         {
             $lookup: {
                 from: "winners",
-                localField: "_id",
-                foreignField: "resultId",
+                let: { result_id: "$_id" },
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: { $eq: ["$resultId", "$$result_id"] },
+                            isRollback: false,
+                            resultConnect: { $in: winnerselect }
+                        }
+                    }
+                ],
                 as: "winners",
             },
-        },
+        }
     ]);
-
+    let winnerId = [];
     const updateResults = getResults.map(async (res) => {
         const walletDeductions = res.winners.map(async (win) => {
             try {
+                winnerId.push(mongoose.Types.ObjectId(win._id))
                 transaction.push({
                     amountOfTransaction: win.wonAmount,
                     dateOfTransaction: Date.now(),
@@ -48,7 +64,7 @@ exports.Rollback = async (resultId) => {
         console.log("res id " + res._id)
         return result.findByIdAndUpdate(res._id, { isRollbacked: true, rollbackedDateTime: Date.now() });
     });
-
+    await Winner.updateMany({ _id: { $in: winnerId } }, { isRollback: true });
     await Promise.all(updateResults);
 };
 exports.cancelGame = async (gameId, start, end) => {

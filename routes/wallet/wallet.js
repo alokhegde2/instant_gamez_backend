@@ -186,13 +186,16 @@ app.post("/withdrawMoney", verify.verify,
             withdraw: amount
           }
         };
-        const walletRecord = await Wallet.findByIdAndUpdate(walletId, walletUpdate, { new: true }).lean();
+        let deduction = amount * 0.02
+        // const walletRecord = await Wallet.findByIdAndUpdate(walletId, walletUpdate, { new: true }).lean();
         await new withdrawalRequest({
           walletId: walletId,
           userId: userId,
-          amount: amount
+          amount: amount,
+          deduction: deduction,
+          payableAmount: amount - deduction
         }).save()
-        await createTransaction(userId, amount, "Withdraw", walletId);
+        // await createTransaction(userId, amount, "Withdraw", walletId);
 
         return res.status(200).json({
           status: "success",
@@ -212,13 +215,34 @@ app.post("/withdrawMoney", verify.verify,
 app.get("/getWithdrawRequest", verify.verifyAdmin,
   async (req, res) => {
     try {
-      const withdrawals = await withdrawalRequest.find({ isApprove: 0 }).populate({
-        path: 'userId',
-        select: 'phoneNumber',
-      }).populate({
-        path: 'walletId',
-        select: 'amountInWallet gameWinning withdraw',
-      });
+      const withdrawals = await withdrawalRequest.aggregate([
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $lookup: {
+            from: 'wallets',
+            localField: 'walletId',
+            foreignField: '_id',
+            as: 'wallet'
+          }
+        },
+        {
+          $addFields: {
+            createdAt: {
+              $dateToString: { format: '%d/%m/%Y %H:%M', date: '$createdAt' }
+            }
+          }
+        },
+        {
+          $sort: { isApprove: 1, createdAt: -1 }
+        }
+      ]);
 
       return res.status(200).json({
         status: "success",
@@ -236,13 +260,14 @@ app.get("/getWithdrawRequest", verify.verifyAdmin,
 app.put("/getWithdrawRequest", verify.verifyAdmin,
   async (req, res) => {
     try {
-      const withdrawals = await withdrawalRequest.find({ isApprove: 0 }).populate({
+      const withdrawals = await withdrawalRequest.find({}).populate({
         path: 'userId',
         select: 'phoneNumber',
       }).populate({
         path: 'walletId',
         select: 'amountInWallet gameWinning withdraw',
-      });
+      }).sort({ isApprove: 1, createdAt: -1 }); // add this line
+
 
       return res.status(200).json({
         status: "success",
@@ -262,26 +287,29 @@ app.post('/updateWithdrawRequest', async (req, res) => {
     const { withdrawrequestId, status, description } = req.body
     // Update the withdrawrequest status
     // Update the withdrawal status
+
     const withdrawRequestUpdate = await withdrawalRequest.findByIdAndUpdate(withdrawrequestId,
       {
-        isApprove: status,
+        isApprove: status == "Approve" ? 2 : 3,
         description: description
       });
-    if (status == 1) {
+    if (status == "Approve") {
       await Wallet.findByIdAndUpdate(withdrawRequestUpdate.walletId, {
         $inc: {
-          withdrawGame: withdrawRequestUpdate.amount,
-          withdraw: -withdrawRequestUpdate.amount
+          gameWinning: -withdrawRequestUpdate.amount,
         }
-      })
-    } else if (status == 2) {
-      await Wallet.findByIdAndUpdate(withdrawRequestUpdate.walletId, {
-        $inc: {
-          gameWinning: withdrawRequestUpdate.amount,
-          withdraw: -withdrawRequestUpdate.amount
-        }
-      })
-      await createTransaction(withdrawRequestUpdate.userId, withdrawRequestUpdate.amount, "Refund Withdraw", withdrawRequestUpdate.walletId);
+      });
+      await createTransaction(withdrawRequestUpdate.userId, withdrawRequestUpdate.amount, "Withdraw", withdrawRequestUpdate.walletId);
+
+      // const walletRecord = await Wallet.findByIdAndUpdate(walletId, walletUpdate, { new: true }).lean();
+    } else if (status == "Reject") {
+      // await Wallet.findByIdAndUpdate(withdrawRequestUpdate.walletId, {
+      //   $inc: {
+      //     gameWinning: withdrawRequestUpdate.amount,
+      //     withdraw: -withdrawRequestUpdate.amount
+      //   }
+      // })
+      // await createTransaction(withdrawRequestUpdate.userId, withdrawRequestUpdate.amount, "Refund Withdraw", withdrawRequestUpdate.walletId);
 
     }
     // Successfully update the withdrawrequest status

@@ -55,6 +55,14 @@ const winnerSchema = new mongoose.Schema({
   bidId: {
     type: mongoose.Types.ObjectId,
     ref: "biddings"
+  },
+  isRollback: {
+    type: Boolean,
+    default: false
+  },
+  resultConnect: {
+    type: Number,
+    default: 0
   }
 });
 winnerSchema.pre("save", async function (next) {

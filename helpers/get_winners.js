@@ -121,6 +121,12 @@ const getWinners = async (gameId, results, resultId, start, end) => {
               isWinner: 0
             },
             {
+              createdDate: {
+                $gte: start,
+                $lt: end
+              }
+            },
+            {
               biddingOn: result.type
             }, { biddingNumber: result.result }
           ]
@@ -151,7 +157,8 @@ const getWinners = async (gameId, results, resultId, start, end) => {
             winningCategory: result.cat,
             wonNumber: result.result,
             wonAmount: wonAmount,
-            walletId: bid.userData[0].wallet
+            walletId: bid.userData[0].wallet,
+            resultConnect: result.indicator
           });
           transaction.push({
             amountOfTransaction: wonAmount,
