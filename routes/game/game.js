@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 
 // IMPORTING VERIFICATION MIDDLEWARE
 const { verify, verifyAdmin } = require("../../helpers/verification");
+const moment = require("moment-timezone");
 
 //IMPORTING DOT ENV
 require("dotenv/config");
@@ -27,6 +28,7 @@ const { Rollback, cancelGame } = require("../../helpers/rollback");
 const gameTrack = require("../../models/game/gameTrack");
 const result = require("../../models/game/result");
 const bidding = require("../../models/bidding/bidding");
+const resultAnalytic = require("../../models/game/resultAnalytic");
 
 // GAME CREATION ROUTE
 app.post("/", verify, async (req, res) => {
@@ -692,14 +694,20 @@ app.post("/result", verifyAdmin, async (req, res) => {
     // Call getWinners in the background
     Promise.all([getWinners(gameId, resultCategory, result._id, start, end)]);
     if (!resultString.includes("*")) {
+      let getLooser = await bidding.aggregate([
+        {
+          $match: {
+            game: mongoose.Types.ObjectId(gameId),
+            isWinner: 0
+          }
+        }
+      ])
+      getLooserId = getLooser.length > 0 ? getLooser.map(e => e._id) : []
+      await new resultAnalytic({ resultId: resultId, bidding: getLooserId }).save()
       const getBiddings = await bidding.updateMany(
         {
           game: mongoose.Types.ObjectId(gameId),
-          isWinner: 0,
-          createdDate: {
-            $gte: start,
-            $lt: end
-          }
+          isWinner: 0
         },
         {
           isWinner: 2
@@ -723,7 +731,7 @@ app.post("/rollback", verifyAdmin, async (req, res) => {
       return res.status(400).json({ message: "Invalid Game Id" });
     }
     console.log(resultId + "  " + type)
-    // let rollbackIs = Promise.all([Rollback(resultId, type)]);
+    let rollbackIs = Promise.all([Rollback(resultId, type)]);
 
     return res.status(200).json({ status: "success", result: "rollbackIs" });
   } catch (err) {
@@ -776,6 +784,7 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
 
     const { date } = req.query;
     let start, end;
+    await bidding.updateMany({ game: mongoose.Types.ObjectId('64a6d3ab7383c2a0a2efa986') }, { isWinner: 0 });
     if (date) {
       // Use the given date
       const givenDate = new Date(date); // Note the YYYY-MM-DD format
@@ -808,7 +817,7 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
     //   path: "results",
     //   match: { isRollbacked: false },
     // });
-    console.log(gameIds)
+    // console.log(gameIds)
     const gameResults = await Game.aggregate([
       { $match: { _id: { $in: gameIds } } },
       {
@@ -834,12 +843,12 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
       }
     ]);
 
-    console.log(gameIds)
-    console.log(gameResults)
+    // console.log(gameIds)
+    // console.log(gameResults)
     const gameIdsWithoutResults = gameResults.filter(game => game.results.length === 0).map(game => { return { id: game._id, date: game.closingBiddingTime } });
 
     // Games without results
-    console.log(gameIdsWithoutResults)
+    // console.log(gameIdsWithoutResults)
     await Promise.all(gameIdsWithoutResults.map(async (gameId) => {
       const newResult = new Result({
         anouncedDateTime: gameId.date,
@@ -873,7 +882,7 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
       _id: { $in: gameIds }
     };
 
-    const finalResult = await Game.aggregate([
+    let finalResult = await Game.aggregate([
       { $match: gameQuery },
       {
         $lookup: {
@@ -908,83 +917,6 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
         }
       },
       {
-        // Add a new field 'openBiddingTimeGmt530' with the converted time
-        $addFields: {
-          // Add a new field called formattedDate that is the formatted string of createdAt
-          openBiddingTimeGmt530: {
-            // Use $concat to join multiple strings
-            $concat: [
-              // Use $dateToString to get the hour and minute
-              {
-                $dateToString: {
-                  date: "$openBiddingTime",
-                  // The format string specifies how to display the hour and minute
-                  // %I is the hour in 12-hour clock, %M is the minute
-                  format: "%H:%M",
-                  // The timezone specifies the offset from UTC
-                  // Indian Standard Time is UTC+05:30
-                  timezone: "+05:30"
-                }
-              },
-              // Add a space between the time and AM/PM
-              " ",
-              // Use $cond to check if the hour is less than 12
-              {
-                $cond: [
-                  {
-                    $lt: [
-                      // Use $hour to get the hour part of the date
-                      { $hour: { date: "$openBiddingTime", timezone: "+05:30" } },
-                      12
-                    ]
-                  },
-                  // If true, append "AM"
-                  "AM",
-                  // If false, append "PM"
-                  "PM"
-                ]
-              }
-            ]
-          }
-          ,
-          closingBiddingTimeGmt530: {
-            // Use $concat to join multiple strings
-            $concat: [
-              // Use $dateToString to get the hour and minute
-              {
-                $dateToString: {
-                  date: "$closingBiddingTime",
-                  // The format string specifies how to display the hour and minute
-                  // %I is the hour in 12-hour clock, %M is the minute
-                  format: "%H:%M",
-                  // The timezone specifies the offset from UTC
-                  // Indian Standard Time is UTC+05:30
-                  timezone: "+05:30"
-                }
-              },
-              // Add a space between the time and AM/PM
-              " ",
-              // Use $cond to check if the hour is less than 12
-              {
-                $cond: [
-                  {
-                    $lt: [
-                      // Use $hour to get the hour part of the date
-                      { $hour: { date: "$openBiddingTime", timezone: "+05:30" } },
-                      12
-                    ]
-                  },
-                  // If true, append "AM"
-                  "AM",
-                  // If false, append "PM"
-                  "PM"
-                ]
-              }
-            ]
-          }
-        }
-      },
-      {
         $addFields: {
           id: "$_id"
         }
@@ -996,7 +928,10 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
         }
       }
     ]);
-
+    finalResult.map(e => {
+      e.openBiddingTimeGmt530 = moment(e.openBiddingTime).utcOffset('+05:30').format('hh:mm A')
+      e.closingBiddingTimeGmt530 = moment(e.closingBiddingTime).utcOffset('+05:30').format('hh:mm A')
+    })
     return res.status(200).json({ status: "success", start: start, end: end, result: finalResult });
   } catch (err) {
     console.error(err);
@@ -1008,9 +943,9 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
 function parseMainString(mainString) {
   console.log(mainString)
   const [open, middle, close] = mainString.split("-");
-  const halfSangam1 = `${open}-${middle.charAt(1)}`;
-  const halfSangam2 = `${close}-${middle.charAt(0)}`;
-  const fullSangam = `${open}-${close}`;
+  const halfSangam1 = `${open}${middle.charAt(1)}`;
+  const halfSangam2 = `${close}${middle.charAt(0)}`;
+  const fullSangam = `${open}${close}`;
   return [
     {
       cat: 'Single',

@@ -101,6 +101,7 @@ const getWinners = async (gameId, results, resultId, start, end) => {
   console.log('here')
   const getConfig = await Config.findOne();
   console.log(getConfig)
+  console.log(start + " " + end)
   console.log(gameId + "   " + resultId)
   const winners = [];
   const transaction = [];
@@ -109,42 +110,69 @@ const getWinners = async (gameId, results, resultId, start, end) => {
   for (const result of results) {
     console.log(result)
     console.log(result.cat + "  " + result.type + "  " + result.result)
-    const getBiddings = await bidding.aggregate([
-      {
-        $match: {
-          $and: [
-            {
-              game: mongoose.Types.ObjectId(gameId)
-            },
-            { biddedCategory: result.cat },
-            {
-              isWinner: 0
-            },
-            {
-              createdDate: {
-                $gte: start,
-                $lt: end
+    if (result.cat == "Double Pana") {
+      getBiddingsData = await bidding.aggregate([
+        {
+          $match: {
+            $and: [
+              {
+                game: mongoose.Types.ObjectId(gameId)
+              },
+              { biddedCategory: result.cat },
+              {
+                isWinner: 0
+              },
+              {
+                biddingOn: result.type
               }
-            },
-            {
-              biddingOn: result.type
-            }, { biddingNumber: result.result }
-          ]
+            ]
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user',
+            foreignField: '_id',
+            as: 'userData'
+          }
         }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: 'user',
-          foreignField: '_id',
-          as: 'userData'
+      ]);
+      getBiddings = findMatchingStrings(getBiddingsData, result.result)
+      console.log('Double Pana')
+      console.log(getBiddings)
+    }
+    else {
+      getBiddings = await bidding.aggregate([
+        {
+          $match: {
+            $and: [
+              {
+                game: mongoose.Types.ObjectId(gameId)
+              },
+              { biddedCategory: result.cat },
+              {
+                isWinner: 0
+              },
+              {
+                biddingOn: result.type
+              }, { biddingNumber: result.result }
+            ]
+          }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'user',
+            foreignField: '_id',
+            as: 'userData'
+          }
         }
-      }
-    ]);
+      ]);
+    }
     console.log(getBiddings)
     if (getBiddings.length > 0) {
       for (const bid of getBiddings) {
-        if (bid.userData.length > 0) {
+        if (bid != undefined && bid.userData != undefined && bid.userData.length > 0) {
           console.log("amount ")
           console.log(bid.amountBidded + "  " + getConfig[result.cat.replace(/\s/g, '').trim()] + "" + result.cat.trim());
           const wonAmount = (bid.amountBidded * getConfig[result.cat.replace(/\s/g, '').trim()]) / 10;
@@ -190,5 +218,17 @@ const getWinners = async (gameId, results, resultId, start, end) => {
   );
   console.log('winner announced')
 };
+function findMatchingStrings(biddingNumbers, resultString) {
+  const matchingStrings = [];
 
+  for (let i = 0; i < biddingNumbers.length; i++) {
+    const biddingNumber = biddingNumbers[i].biddingNumber;
+
+    if (biddingNumber === resultString) {
+      matchingStrings.push(biddingNumbers[i]);
+    }
+  }
+
+  return matchingStrings;
+}
 module.exports.getWinners = getWinners;

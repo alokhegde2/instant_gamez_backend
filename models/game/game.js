@@ -44,9 +44,9 @@ const gameSchema = new mongoose.Schema({
   },
 });
 gameSchema.post(["save", "findOneAndUpdate", "updateOne"], async function (doc, next) {
-  console.log(doc)
-  console.log("openBiddingTime: ", doc.openBiddingTime);
-  console.log("closingBiddingTime: ", doc.closingBiddingTime);
+  // console.log(doc)
+  // console.log("openBiddingTime: ", doc.openBiddingTime);
+  // console.log("closingBiddingTime: ", doc.closingBiddingTime);
   const datetime = new Date(doc.closingBiddingTime);
   const start = new Date(datetime.getFullYear(), datetime.getMonth(), datetime.getDate(), 0, 0, 0);
   const end = new Date(datetime.getFullYear(), datetime.getMonth(), datetime.getDate(), 23, 59, 59);

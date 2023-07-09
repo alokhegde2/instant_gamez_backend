@@ -7,6 +7,7 @@ const wallet = require("../models/wallet/wallet");
 const { walletDeduction } = require("./wallet_deduction");
 
 const transactionSchema = require('../models/wallet/transaction');
+const resultAnalytic = require("../models/game/resultAnalytic");
 exports.Rollback = async (resultId, type) => {
     let winnerselect = []
     if (type == 1) {
@@ -15,6 +16,7 @@ exports.Rollback = async (resultId, type) => {
     else {
         winnerselect = [1, 2]
     }
+    console.log('winner select' + winnerselect)
     console.log(resultId)
     const transaction = []
     const getResults = await result.aggregate([
@@ -37,6 +39,7 @@ exports.Rollback = async (resultId, type) => {
         }
     ]);
     let winnerId = [];
+    console.log(getResults[0].winners)
     const updateResults = getResults.map(async (res) => {
         const walletDeductions = res.winners.map(async (win) => {
             try {
@@ -62,9 +65,24 @@ exports.Rollback = async (resultId, type) => {
         await transactionSchema.insertMany(transaction)
         await Promise.all(walletDeductions);
         console.log("res id " + res._id)
-        return result.findByIdAndUpdate(res._id, { isRollbacked: true, rollbackedDateTime: Date.now() });
+        let resultString = (type == 2
+            ? `${res.resultString.slice(0, 5)}*-***`
+            : `***-*${res.resultString.slice(res.resultString.length - 5, res.resultString.length)}`)
+        // console.log(resultString)
+        if (resultString == "***-**-***") {
+            await result.findByIdAndUpdate(resultId, { isRollbacked: true, rollbackedDateTime: Date.now() });
+        }
+        else {
+            console.log(resultString)
+            await result.findByIdAndUpdate(resultId, { resultString: resultString });
+        }
+        let getResultId = await resultAnalytic.findOne({ resultId: mongoose.Types.ObjectId(resultId) })
+        console.log(getResultId)
+        let getReset = await bidding.updateMany({ _id: { $in: getResultId.bidding } }, { isWinner: 0 }, { new: true })
+        console.log(getReset)
+        return
     });
-    await Winner.updateMany({ _id: { $in: winnerId } }, { isRollback: true });
+    await winner.updateMany({ _id: { $in: winnerId } }, { isRollback: true });
     await Promise.all(updateResults);
 };
 exports.cancelGame = async (gameId, start, end) => {

@@ -18,6 +18,8 @@
     "helmet": "^5.1.1",
     "joi": "^17.6.0",
     "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.4",
+    "moment-timezone": "^0.5.43",
     "mongoose": "^6.5.3",
     "morgan": "^1.10.0",
     "socket.io": "^4.5.1"

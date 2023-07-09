@@ -301,7 +301,7 @@ app.post('/updateWithdrawRequest', async (req, res) => {
       });
       await createTransaction(withdrawRequestUpdate.userId, withdrawRequestUpdate.amount, "Withdraw", withdrawRequestUpdate.walletId);
 
-      // const walletRecord = await Wallet.findByIdAndUpdate(walletId, walletUpdate, { new: true }).lean();
+      // const walletRecord = await Wallet.findByIdAndUpdate(walletId, walletUpdate, { new: true }).lean();)
     } else if (status == "Reject") {
       // await Wallet.findByIdAndUpdate(withdrawRequestUpdate.walletId, {
       //   $inc: {
