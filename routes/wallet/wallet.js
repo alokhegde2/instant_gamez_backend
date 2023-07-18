@@ -240,7 +240,7 @@ app.get("/getWithdrawRequest", verify.verifyAdmin,
           }
         },
         {
-          $sort: { isApprove: 1, createdAt: -1 }
+          $sort: { isApprove: 1, createdAt: 1 }
         }
       ]);
 
@@ -290,10 +290,10 @@ app.post('/updateWithdrawRequest', async (req, res) => {
 
     const withdrawRequestUpdate = await withdrawalRequest.findByIdAndUpdate(withdrawrequestId,
       {
-        isApprove: status == "Approve" ? 2 : 3,
+        isApprove: status,
         description: description
       });
-    if (status == "Approve") {
+    if (status == 2) {
       await Wallet.findByIdAndUpdate(withdrawRequestUpdate.walletId, {
         $inc: {
           gameWinning: -withdrawRequestUpdate.amount,
@@ -302,14 +302,14 @@ app.post('/updateWithdrawRequest', async (req, res) => {
       await createTransaction(withdrawRequestUpdate.userId, withdrawRequestUpdate.amount, "Withdraw", withdrawRequestUpdate.walletId);
 
       // const walletRecord = await Wallet.findByIdAndUpdate(walletId, walletUpdate, { new: true }).lean();)
-    } else if (status == "Reject") {
+    } else if (status == 3) {
       // await Wallet.findByIdAndUpdate(withdrawRequestUpdate.walletId, {
       //   $inc: {
       //     gameWinning: withdrawRequestUpdate.amount,
       //     withdraw: -withdrawRequestUpdate.amount
       //   }
       // })
-      // await createTransaction(withdrawRequestUpdate.userId, withdrawRequestUpdate.amount, "Refund Withdraw", withdrawRequestUpdate.walletId);
+      await createTransaction(withdrawRequestUpdate.userId, withdrawRequestUpdate.amount, "Refund Withdraw", withdrawRequestUpdate.walletId);
 
     }
     // Successfully update the withdrawrequest status
