@@ -163,7 +163,7 @@ app.post("/withdrawMoney", verify.verify,
     try {
       var getConfig = await config.findOne();
       if (getConfig != undefined && getConfig != null && getConfig.minWithdrawal > amount) {
-        return res.status(400).send({ message: `Amount to add must be at least ${getConfig.minWithdrawal}`, status: 'error' });
+        return res.status(400).send({ message: `Amount to withdraw must be at least ${getConfig.minWithdrawal}`, status: 'error' });
       }
       // Checking for user status
       var userStatus = await User.findById(userId);
@@ -187,7 +187,7 @@ app.post("/withdrawMoney", verify.verify,
           }
         };
         let deduction = amount * 0.02
-        // const walletRecord = await Wallet.findByIdAndUpdate(walletId, walletUpdate, { new: true }).lean();
+        const walletRecord = await Wallet.findByIdAndUpdate(walletId, walletUpdate, { new: true }).lean();
         await new withdrawalRequest({
           walletId: walletId,
           userId: userId,
@@ -195,7 +195,7 @@ app.post("/withdrawMoney", verify.verify,
           deduction: deduction,
           payableAmount: amount - deduction
         }).save()
-        // await createTransaction(userId, amount, "Withdraw", walletId);
+        await createTransaction(userId, amount, "Withdraw", walletId);
 
         return res.status(200).json({
           status: "success",
@@ -240,7 +240,7 @@ app.get("/getWithdrawRequest", verify.verifyAdmin,
           }
         },
         {
-          $sort: { isApprove: 1, createdAt: 1 }
+          $sort: { isApprove: 1, createdAt: -1 }
         }
       ]);
 
@@ -296,19 +296,20 @@ app.post('/updateWithdrawRequest', async (req, res) => {
     if (status == 2) {
       await Wallet.findByIdAndUpdate(withdrawRequestUpdate.walletId, {
         $inc: {
-          gameWinning: -withdrawRequestUpdate.amount,
+          withdraw: -withdrawRequestUpdate.amount,
+          withdrawGame: withdrawRequestUpdate.amount
         }
-      });
+      })
       await createTransaction(withdrawRequestUpdate.userId, withdrawRequestUpdate.amount, "Withdraw", withdrawRequestUpdate.walletId);
 
       // const walletRecord = await Wallet.findByIdAndUpdate(walletId, walletUpdate, { new: true }).lean();)
     } else if (status == 3) {
-      // await Wallet.findByIdAndUpdate(withdrawRequestUpdate.walletId, {
-      //   $inc: {
-      //     gameWinning: withdrawRequestUpdate.amount,
-      //     withdraw: -withdrawRequestUpdate.amount
-      //   }
-      // })
+      await Wallet.findByIdAndUpdate(withdrawRequestUpdate.walletId, {
+        $inc: {
+          gameWinning: withdrawRequestUpdate.amount,
+          withdraw: -withdrawRequestUpdate.amount
+        }
+      })
       await createTransaction(withdrawRequestUpdate.userId, withdrawRequestUpdate.amount, "Refund Withdraw", withdrawRequestUpdate.walletId);
 
     }

@@ -146,44 +146,129 @@ app.get("/current", verify, async (req, res) => {
   try {
     // We are getting data where deleted date is not today
     // And getting result of only today games
-    var gameData = await Game.find({
-      openDate: day,
-      isDeleted: false,
-      disabledDate: {
-        $not: {
-          $gte: new Date(
-            currentDate.getFullYear(),
-            currentDate.getMonth(),
-            currentDate.getDate(),
-            00,
-            00,
-            00
-          ),
-          $lt: new Date(
-            currentDate.getFullYear(),
-            currentDate.getMonth(),
-            currentDate.getDate(),
-            23,
-            59,
-            59
-          ),
+    // var gameData = await Game.find({
+    //   openDate: day,
+    //   isDeleted: false,
+    //   disabledDate: {
+    //     $not: {
+    //       $gte: new Date(
+    //         currentDate.getFullYear(),
+    //         currentDate.getMonth(),
+    //         currentDate.getDate(),
+    //         00,
+    //         00,
+    //         00
+    //       ),
+    //       $lt: new Date(
+    //         currentDate.getFullYear(),
+    //         currentDate.getMonth(),
+    //         currentDate.getDate(),
+    //         23,
+    //         59,
+    //         59
+    //       ),
+    //     },
+    //   },
+    // })
+    //   .populate({
+    //     path: "results",
+    //     select: ["resultString", "anouncedDateTime"],
+    //     strictPopulate: false,
+    //     match: {
+    //       isRollbacked: false // add this condition
+    //     }
+    //   })
+    //   .sort({ openBiddingTime: "asc" })
+    //   .limit(limit)
+    //   .skip(startIndex);
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+
+    // Get tomorrow's date
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Set end to the end of tomorrow
+    const end = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 23, 59, 59);
+
+    console.log("Start:", start);
+    console.log("End:", end);
+
+    let gameData = await Game.aggregate([
+      {
+        $match: {
+          openDate: day,
+          isDeleted: false,
+          disabledDate: {
+            $not: {
+              $gte: new Date(
+                currentDate.getFullYear(),
+                currentDate.getMonth(),
+                currentDate.getDate(),
+                0,
+                0,
+                0
+              ),
+              $lt: new Date(
+                currentDate.getFullYear(),
+                currentDate.getMonth(),
+                currentDate.getDate(),
+                23,
+                59,
+                59
+              ),
+            },
+          },
         },
       },
-    })
-      .populate({
-        path: "results",
-        select: ["resultString", "anouncedDateTime"],
-        strictPopulate: false,
-        match: {
-          isRollbacked: false // add this condition
-        }
-      })
-      .sort({ openBiddingTime: "asc" })
-      .limit(limit)
-      .skip(startIndex);
+      {
+        $lookup: {
+          from: "results", // Assuming the name of the collection is "results"
+          let: { gameId: "$_id" },
+          pipeline: [{
+            $match: {
+              $expr: {
+                $and: [{ $eq: ['$gameId', '$$gameId'] },
+                { $gte: ["$anouncedDateTime", start] },
+                { $lte: ["$anouncedDateTime", end] },
+                { $eq: ['$isRollbacked', false] }]
+              }
+            }
+          }, {
+            $project: {
+              resultString: 1,
+              anouncedDateTime: 1,
+              id: 1,
+              isRollbacked: 1
+            }
+          }], // Assuming the reference field is "gameId"
+          as: "results",
+        },
+      },
+      {
+        $sort: {
+          openBiddingTime: 1,
+        },
+      },
+      {
+        $limit: limit, // Replace 'limit' with the actual value you want to use
+      },
+      {
+        $skip: startIndex, // Replace 'startIndex' with the actual value you want to use
+      },
+    ])
 
     var sortedGame = [];
-
+    gameData.forEach((element) => {
+      if (element.results.length == 0) {
+        element['results'] = {
+          "_id": "64bb998b8121f4664fbc99ec",
+          "resultString": "***-**-***",
+          "anouncedDateTime": "2023-07-22T05:30:01.000Z",
+          "isRollbacked": false
+        }
+      }
+    })
     //Check for close time
     gameData.forEach((element) => {
       var closeTime = new Date(element["closingBiddingTime"]);
