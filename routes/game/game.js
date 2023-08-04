@@ -261,12 +261,12 @@ app.get("/current", verify, async (req, res) => {
     var sortedGame = [];
     gameData.forEach((element) => {
       if (element.results.length == 0) {
-        element['results'] = {
+        element['results'] = [{
           "_id": "64bb998b8121f4664fbc99ec",
           "resultString": "***-**-***",
           "anouncedDateTime": "2023-07-22T05:30:01.000Z",
           "isRollbacked": false
-        }
+        }]
       }
     })
     //Check for close time
