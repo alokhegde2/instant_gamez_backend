@@ -102,9 +102,9 @@ app.get("/", async (req, res) => {
               currentDate.getFullYear(),
               currentDate.getMonth(),
               currentDate.getDate(),
-              00,
-              00,
-              00
+              0,
+              0,
+              0
             ),
             $lt: new Date(
               currentDate.getFullYear(),
@@ -338,9 +338,9 @@ app.get("/disabled", verify, async (req, res) => {
           currentDate.getFullYear(),
           currentDate.getMonth(),
           currentDate.getDate(),
-          00,
-          00,
-          00
+          0,
+          0,
+          0
         ),
         $lt: new Date(
           currentDate.getFullYear(),
@@ -362,9 +362,9 @@ app.get("/disabled", verify, async (req, res) => {
               currentDate.getFullYear(),
               currentDate.getMonth(),
               currentDate.getDate(),
-              00,
-              00,
-              00
+              0,
+              0,
+              0
             ),
             $lt: new Date(
               currentDate.getFullYear(),
@@ -411,9 +411,9 @@ app.get("/cancelled", verify, async (req, res) => {
           currentDate.getFullYear(),
           currentDate.getMonth(),
           currentDate.getDate(),
-          00,
-          00,
-          00
+          0,
+          0,
+          0
         ),
         $lt: new Date(
           currentDate.getFullYear(),
