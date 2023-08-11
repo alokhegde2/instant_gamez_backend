@@ -18,6 +18,7 @@ app.get("/:id", verify.verify, async (req, res) => {
 
   const page = parseInt(req.query.page);
   const limit = parseInt(req.query.limit);
+  const transType = req.query.transType;
 
   const startIndex = (page - 1) * limit;
 
@@ -27,11 +28,38 @@ app.get("/:id", verify.verify, async (req, res) => {
   }
 
   try {
-    var transaction = await Transactions.find({ user: id })
-      .sort({ dateOfTransaction: -1 })
-      .limit(limit)
-      .skip(startIndex);
-
+    if (transType == "Transactions") {
+      var transaction = await Transactions.find({
+        user: id,
+        $or: [
+          { typeOfTransaction: "Deposit" },
+          { typeOfTransaction: "Withdraw" },
+        ],
+      })
+        .sort({ dateOfTransaction: -1 })
+        .limit(limit)
+        .skip(startIndex);
+    } else if (transType == "Biddings") {
+      var transaction = await Transactions.find({
+        user: id,
+        $or: [
+          { typeOfTransaction: "Rollback" },
+          { typeOfTransaction: "Winning" },
+          { typeOfTransaction: "GamePlay" },
+        ],
+      })
+        .sort({ dateOfTransaction: -1 })
+        .limit(limit)
+        .skip(startIndex);
+    } else {
+      var transaction = await Transactions.find({
+        user: id,
+        typeOfTransaction: "Refer",
+      })
+        .sort({ dateOfTransaction: -1 })
+        .limit(limit)
+        .skip(startIndex);
+    }
     return res
       .status(200)
       .json({ status: "success", transactions: transaction });
