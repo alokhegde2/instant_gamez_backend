@@ -20,7 +20,7 @@ const { verify, verifyAdmin } = require("../../helpers/verification");
 const { default: mongoose } = require("mongoose");
 const user = require("../../models/user/user");
 
-const offerSchema = require('../../models/user/offer');
+const offerSchema = require("../../models/user/offer");
 const referralSchema = require("../../models/user/referralSchema");
 //Register the new Admin
 app.post("/register", async (req, res) => {
@@ -57,11 +57,11 @@ app.post("/register", async (req, res) => {
     savedAdmin = await admin.save();
     if (referralUserId != undefined) {
       await new offerSchema({
-        userId: admin._id
+        userId: admin._id,
       }).save();
       await new referralSchema({
         from: referralUserId,
-        to: admin._id
+        to: admin._id,
       }).save();
     }
     return res.status(200).json({
@@ -312,31 +312,30 @@ app.get("/referral/:id", verify, async (req, res) => {
     const referral = await referralSchema.aggregate([
       {
         $lookup: {
-          from: 'users',
-          localField: 'to',
-          foreignField: '_id',
-          as: 'user'
-        }
+          from: "users",
+          localField: "to",
+          foreignField: "_id",
+          as: "user",
+        },
       },
       {
-        $unwind: '$user'
+        $unwind: "$user",
       },
       {
         $project: {
           _id: 0,
-          phoneNumber: '$user.phoneNumber',
+          phoneNumber: "$user.phoneNumber",
           creditedAmount: 1,
           createdDate: {
             $dateToString: {
-              date: '$user.createdDate',
-              timezone: '+05:30',
-              format: '%Y-%m-%d %H:%M:%S'
-            }
-          }
-        }
-      }
+              date: "$user.createdDate",
+              timezone: "+05:30",
+              format: "%Y-%m-%d %H:%M:%S",
+            },
+          },
+        },
+      },
     ]);
-
 
     if (referral.length == 0) {
       return res
@@ -364,6 +363,38 @@ app.get("/", verifyAdmin, async (req, res) => {
       .skip(startIndex);
 
     return res.status(200).json({ status: "success", users: users });
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ error: error, status: "error" });
+  }
+});
+
+app.post("/add/bank", verify, async (req, res) => {
+  const {
+    bankName,
+    accountNumber,
+    ifscCode,
+    bankBranch,
+    accountHolderName,
+    userId,
+  } = req.body;
+
+  if (!mongoose.isValidObjectId(userId)) {
+    return res.status(400).json({ message: "Invalid user id" });
+  }
+
+  try {
+    await User.findByIdAndUpdate(userId, {
+      bankAccountNumber: accountNumber,
+      bankIfscCode: ifscCode,
+      bankBranch: bankBranch,
+      bankName: bankName,
+      bankAccountHolderName: accountHolderName,
+    });
+
+    return res
+      .status(200)
+      .json({ status: "success", message: "Bank Account Added Successfully!" });
   } catch (error) {
     console.error(error);
     return res.status(400).json({ error: error, status: "error" });

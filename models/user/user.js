@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  bankName: {
+    type: String,
+    default: "",
+  },
   bankAccountHolderName: {
     type: String,
     default: "",

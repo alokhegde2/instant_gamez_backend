@@ -41,18 +41,18 @@ app.post("/", verify, async (req, res) => {
   // DATA RECIVED FROM THE REQUEST BODY
   const { name, openBidTime, closeBidTime, openDate } = req.body;
 
-  try {
-    var gameStatus = await Game.find({ name: name, isDeleted: false });
+  // try {
+  //   var gameStatus = await Game.find({ name: name, isDeleted: false });
 
-    if (gameStatus.length !== 0) {
-      return res.status(400).json({ message: "Game name is already taken" });
-    }
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ status: "error", message: "Unable to add the game" });
-  }
+  //   if (gameStatus.length !== 0) {
+  //     return res.status(400).json({ message: "Game name is already taken" });
+  //   }
+  // } catch (error) {
+  //   console.error(error);
+  //   return res
+  //     .status(500)
+  //     .json({ status: "error", message: "Unable to add the game" });
+  // }
 
   // CREATING THE GAME DATA
   var gameData = new Game({
@@ -115,7 +115,7 @@ app.get("/", async (req, res) => {
               59
             ),
           },
-          isRollbacked: false
+          isRollbacked: false,
         },
         // justOne
       })
@@ -182,14 +182,28 @@ app.get("/current", verify, async (req, res) => {
     //   .limit(limit)
     //   .skip(startIndex);
     const today = new Date();
-    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+    const start = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      0,
+      0,
+      0
+    );
 
     // Get tomorrow's date
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     // Set end to the end of tomorrow
-    const end = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 23, 59, 59);
+    const end = new Date(
+      tomorrow.getFullYear(),
+      tomorrow.getMonth(),
+      tomorrow.getDate(),
+      23,
+      59,
+      59
+    );
 
     console.log("Start:", start);
     console.log("End:", end);
@@ -225,23 +239,28 @@ app.get("/current", verify, async (req, res) => {
         $lookup: {
           from: "results", // Assuming the name of the collection is "results"
           let: { gameId: "$_id" },
-          pipeline: [{
-            $match: {
-              $expr: {
-                $and: [{ $eq: ['$gameId', '$$gameId'] },
-                { $gte: ["$anouncedDateTime", start] },
-                { $lte: ["$anouncedDateTime", end] },
-                { $eq: ['$isRollbacked', false] }]
-              }
-            }
-          }, {
-            $project: {
-              resultString: 1,
-              anouncedDateTime: 1,
-              id: 1,
-              isRollbacked: 1
-            }
-          }], // Assuming the reference field is "gameId"
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$gameId", "$$gameId"] },
+                    { $gte: ["$anouncedDateTime", start] },
+                    { $lte: ["$anouncedDateTime", end] },
+                    { $eq: ["$isRollbacked", false] },
+                  ],
+                },
+              },
+            },
+            {
+              $project: {
+                resultString: 1,
+                anouncedDateTime: 1,
+                id: 1,
+                isRollbacked: 1,
+              },
+            },
+          ], // Assuming the reference field is "gameId"
           as: "results",
         },
       },
@@ -256,19 +275,21 @@ app.get("/current", verify, async (req, res) => {
       {
         $skip: startIndex, // Replace 'startIndex' with the actual value you want to use
       },
-    ])
+    ]);
 
     var sortedGame = [];
     gameData.forEach((element) => {
       if (element.results.length == 0) {
-        element['results'] = [{
-          "_id": "64bb998b8121f4664fbc99ec",
-          "resultString": "***-**-***",
-          "anouncedDateTime": "2023-07-22T05:30:01.000Z",
-          "isRollbacked": false
-        }]
+        element["results"] = [
+          {
+            _id: "64bb998b8121f4664fbc99ec",
+            resultString: "***-**-***",
+            anouncedDateTime: "2023-07-22T05:30:01.000Z",
+            isRollbacked: false,
+          },
+        ];
       }
-    })
+    });
     //Check for close time
     gameData.forEach((element) => {
       var closeTime = new Date(element["closingBiddingTime"]);
@@ -375,7 +396,7 @@ app.get("/disabled", verify, async (req, res) => {
               59
             ),
           },
-          isRollbacked: false // add this condition
+          isRollbacked: false, // add this condition
         },
         // justOne
       })
@@ -455,9 +476,9 @@ app.get("/:id", async (req, res) => {
       path: "results",
       strictPopulate: false,
       match: {
-        isRollbacked: false // add this condition
+        isRollbacked: false, // add this condition
       },
-      options: { limit: 3, sort: { anouncedDateTime: "asc" } }
+      options: { limit: 3, sort: { anouncedDateTime: "asc" } },
     });
 
     if (gameData === null) {
@@ -487,11 +508,23 @@ app.post("/cancel", verify, async (req, res) => {
   }
 
   try {
-    console.log(id)
-
     const givenDate = new Date(date); // Note the YYYY-MM-DD format
-    start = new Date(givenDate.getFullYear(), givenDate.getMonth(), givenDate.getDate(), 0, 0, 0);
-    end = new Date(givenDate.getFullYear(), givenDate.getMonth(), givenDate.getDate(), 23, 59, 59);
+    start = new Date(
+      givenDate.getFullYear(),
+      givenDate.getMonth(),
+      givenDate.getDate(),
+      0,
+      0,
+      0
+    );
+    end = new Date(
+      givenDate.getFullYear(),
+      givenDate.getMonth(),
+      givenDate.getDate(),
+      23,
+      59,
+      59
+    );
     // var gameData = await Game.findById(id);
 
     // if (gameData === null) {
@@ -501,7 +534,7 @@ app.post("/cancel", verify, async (req, res) => {
     // }
     let findResult = await Result.findById(id);
     if (findResult != undefined && findResult != null) {
-      await cancelGame(findResult.gameId, start, end)
+      await cancelGame(findResult.gameId, start, end);
       findResult.isCancelled = true;
       await findResult.save();
       return res
@@ -511,7 +544,6 @@ app.post("/cancel", verify, async (req, res) => {
     return res
       .status(200)
       .json({ status: "error", message: "Game cannot cance!" });
-
   } catch (error) {
     console.error(error);
     return res
@@ -543,6 +575,21 @@ app.get("/master/sheet", verify, async (req, res) => {
     return res
       .status(200)
       .json({ status: "success", games: gameData, day: day });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ status: "error", message: "Some error occured", error: error });
+  }
+});
+
+app.get("/game/names", verify, async (req, res) => {
+  try {
+    var gameData = await Game.find({
+      isDeleted: false,
+    }).select({name:1}).sort({ openBiddingTime: "asc" });
+
+    return res.status(200).json({ status: "success", games: gameData });
   } catch (error) {
     console.error(error);
     return res
@@ -585,7 +632,7 @@ app.put("/delete/:id", verify, async (req, res) => {
 });
 
 //GETTING COMPLETED GAME (THIS ROUTE FOR USER)
-app.get("/completedUser/:userId", verify, async (req, res) => { });
+app.get("/completedUser/:userId", verify, async (req, res) => {});
 
 //Bidding on the game
 app.post("/bid", verify, async (req, res) => {
@@ -725,14 +772,15 @@ app.post("/result_old", verifyAdmin, async (req, res) => {
     4. If [resultType]=close then append 4 charecter at last
   */
 
-  const getResult = await Result.findOne({ gameId: mongoose.Types.ObjectId(gameId), isRollbacked: false });
+  const getResult = await Result.findOne({
+    gameId: mongoose.Types.ObjectId(gameId),
+    isRollbacked: false,
+  });
   if (getResult != undefined && getResult != null) {
-
   }
   let createNew = new Result({
     gameId: gameId,
-
-  })
+  });
   // Update the document with proper result string
 
   // Once complete result is anounced get the winners
@@ -746,22 +794,23 @@ app.post("/result", verifyAdmin, async (req, res) => {
       return res.status(400).json({ message: "Invalid Game Id" });
     }
     if (!/^[0-9*]{3}-[0-9*]{2}-[0-9*]{3}$/.test(resultString)) {
-
       return res.status(400).json({ message: "Invalid Result String" });
     }
 
     // Find the latest result for the game that has not been rolled back
-    let result = await Result.findOne({ _id: new mongoose.Types.ObjectId(resultId) }).sort({ anouncedDateTime: -1 });
-    console.log(result)
+    let result = await Result.findOne({
+      _id: new mongoose.Types.ObjectId(resultId),
+    }).sort({ anouncedDateTime: -1 });
+    console.log(result);
     if (result) {
-      console.log("result created")
+      console.log("result created");
       if (result.resultString == resultString) {
         return res.status(304).json({ message: "result is not changed" });
       }
       result.resultString = resultString;
       result = await result.save();
     } else {
-      console.log("result not created")
+      console.log("result not created");
       // If there is no existing result, create a new result
       result = new Result({
         gameId,
@@ -771,7 +820,11 @@ app.post("/result", verifyAdmin, async (req, res) => {
       // Save the new result
       result = await result.save();
 
-      let updateResult = await Game.findByIdAndUpdate(gameId, { $push: { results: result._id } }, { new: true })
+      let updateResult = await Game.findByIdAndUpdate(
+        gameId,
+        { $push: { results: result._id } },
+        { new: true }
+      );
     }
 
     const resultCategory = parseMainString(resultString);
@@ -783,19 +836,22 @@ app.post("/result", verifyAdmin, async (req, res) => {
         {
           $match: {
             game: mongoose.Types.ObjectId(gameId),
-            isWinner: 0
-          }
-        }
-      ])
-      getLooserId = getLooser.length > 0 ? getLooser.map(e => e._id) : []
-      await new resultAnalytic({ resultId: resultId, bidding: getLooserId }).save()
+            isWinner: 0,
+          },
+        },
+      ]);
+      getLooserId = getLooser.length > 0 ? getLooser.map((e) => e._id) : [];
+      await new resultAnalytic({
+        resultId: resultId,
+        bidding: getLooserId,
+      }).save();
       const getBiddings = await bidding.updateMany(
         {
           game: mongoose.Types.ObjectId(gameId),
-          isWinner: 0
+          isWinner: 0,
         },
         {
-          isWinner: 2
+          isWinner: 2,
         }
       );
     }
@@ -815,7 +871,7 @@ app.post("/rollback", verifyAdmin, async (req, res) => {
     if (!mongoose.isValidObjectId(resultId)) {
       return res.status(400).json({ message: "Invalid Game Id" });
     }
-    console.log(resultId + "  " + type)
+    console.log(resultId + "  " + type);
     let rollbackIs = Promise.all([Rollback(resultId, type)]);
 
     return res.status(200).json({ status: "success", result: "rollbackIs" });
@@ -832,7 +888,6 @@ app.get("/lastRollback/:id", verifyAdmin, async (req, res) => {
   let rollbackIs = Promise.all([Rollback(gameId)]);
 
   return res.status(200).json({ status: "success", result: rollbackIs });
-
 });
 app.get("/results/getGames", verifyAdmin, async (req, res) => {
   try {
@@ -863,39 +918,84 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
     //   }
     // }
 
-
     // console.log('here')
     // return;
 
     const { date } = req.query;
     let start, end;
-    await bidding.updateMany({ game: mongoose.Types.ObjectId('64a6d3ab7383c2a0a2efa986') }, { isWinner: 0 });
+    await bidding.updateMany(
+      { game: mongoose.Types.ObjectId("64a6d3ab7383c2a0a2efa986") },
+      { isWinner: 0 }
+    );
     if (date) {
       // Use the given date
       const givenDate = new Date(date); // Note the YYYY-MM-DD format
-      start = new Date(givenDate.getFullYear(), givenDate.getMonth(), givenDate.getDate(), 0, 0, 0);
-      end = new Date(givenDate.getFullYear(), givenDate.getMonth(), givenDate.getDate(), 23, 59, 59);
+      start = new Date(
+        givenDate.getFullYear(),
+        givenDate.getMonth(),
+        givenDate.getDate(),
+        0,
+        0,
+        0
+      );
+      end = new Date(
+        givenDate.getFullYear(),
+        givenDate.getMonth(),
+        givenDate.getDate(),
+        23,
+        59,
+        59
+      );
     } else {
       // Use today by default
       const today = new Date();
-      start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
-      end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+      start = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        0,
+        0,
+        0
+      );
+      end = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        23,
+        59,
+        59
+      );
     }
     const getDateGames = await Game.find({ openDate: end.getDay() });
     for (let j = 0; j < getDateGames.length; j++) {
       const oldGame = getDateGames[j];
       // calculate the new openBiddingTime and closingBiddingTime values for the current day
-      const openTime = new Date(end.getFullYear(), end.getMonth(), end.getDate(), oldGame.openBiddingTime.getHours(), oldGame.openBiddingTime.getMinutes(), oldGame.openBiddingTime.getSeconds());
-      const closeTime = new Date(end.getFullYear(), end.getMonth(), end.getDate(), oldGame.closingBiddingTime.getHours(), oldGame.closingBiddingTime.getMinutes(), oldGame.closingBiddingTime.getSeconds());
-      console.log(openTime + " " + closeTime)
-      // update the game record for the current day
-      await Game.findByIdAndUpdate(
-        oldGame._id,
-        { $set: { openBiddingTime: openTime, closingBiddingTime: closeTime } }
+      const openTime = new Date(
+        end.getFullYear(),
+        end.getMonth(),
+        end.getDate(),
+        oldGame.openBiddingTime.getHours(),
+        oldGame.openBiddingTime.getMinutes(),
+        oldGame.openBiddingTime.getSeconds()
       );
+      const closeTime = new Date(
+        end.getFullYear(),
+        end.getMonth(),
+        end.getDate(),
+        oldGame.closingBiddingTime.getHours(),
+        oldGame.closingBiddingTime.getMinutes(),
+        oldGame.closingBiddingTime.getSeconds()
+      );
+      console.log(openTime + " " + closeTime);
+      // update the game record for the current day
+      await Game.findByIdAndUpdate(oldGame._id, {
+        $set: { openBiddingTime: openTime, closingBiddingTime: closeTime },
+      });
     }
-    console.log(start + "  " + end)
-    const gameIds = await gameTrack.find({ date: { $gte: start, $lte: end } }).distinct('gameId')
+    console.log(start + "  " + end);
+    const gameIds = await gameTrack
+      .find({ date: { $gte: start, $lte: end } })
+      .distinct("gameId");
     // const gameResults = await Game.find({
 
     // }).populate({
@@ -917,32 +1017,40 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
                     { $eq: ["$gameId", "$$gameId"] },
                     { $gte: ["$anouncedDateTime", start] },
                     { $lte: ["$anouncedDateTime", end] },
-                    { $eq: ["$isRollbacked", false] }
-                  ]
-                }
-              }
-            }
+                    { $eq: ["$isRollbacked", false] },
+                  ],
+                },
+              },
+            },
           ],
-          as: "results"
-        }
-      }
+          as: "results",
+        },
+      },
     ]);
 
     // console.log(gameIds)
     // console.log(gameResults)
-    const gameIdsWithoutResults = gameResults.filter(game => game.results.length === 0).map(game => { return { id: game._id, date: game.closingBiddingTime } });
+    const gameIdsWithoutResults = gameResults
+      .filter((game) => game.results.length === 0)
+      .map((game) => {
+        return { id: game._id, date: game.closingBiddingTime };
+      });
 
     // Games without results
     // console.log(gameIdsWithoutResults)
-    await Promise.all(gameIdsWithoutResults.map(async (gameId) => {
-      const newResult = new Result({
-        anouncedDateTime: gameId.date,
-        resultString: "***-**-***",
-        gameId: gameId.id,
-      });
-      await newResult.save();
-      await Game.findByIdAndUpdate(gameId.id, { $push: { results: newResult._id } });
-    }));
+    await Promise.all(
+      gameIdsWithoutResults.map(async (gameId) => {
+        const newResult = new Result({
+          anouncedDateTime: gameId.date,
+          resultString: "***-**-***",
+          gameId: gameId.id,
+        });
+        await newResult.save();
+        await Game.findByIdAndUpdate(gameId.id, {
+          $push: { results: newResult._id },
+        });
+      })
+    );
     // const newResults = gameIdsWithoutResults.map((gameId) => ({
     //   anouncedDateTime: gameId.date,
     //   resultString: "***-**-***",
@@ -964,7 +1072,7 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
     //   match: { anouncedDateTime: { $gte: start, $lte: end }, isRollbacked: false },
     // });
     const gameQuery = {
-      _id: { $in: gameIds }
+      _id: { $in: gameIds },
     };
 
     let finalResult = await Game.aggregate([
@@ -981,43 +1089,49 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
                     { $eq: ["$gameId", "$$gameId"] },
                     { $gte: ["$anouncedDateTime", start] },
                     { $lte: ["$anouncedDateTime", end] },
-                    { $eq: ["$isRollbacked", false] }
-                  ]
-                }
-              }
+                    { $eq: ["$isRollbacked", false] },
+                  ],
+                },
+              },
             },
             {
               $addFields: {
-                id: "$_id"
-              }
+                id: "$_id",
+              },
             },
             {
               $project: {
                 _id: 0,
-                __v: 0
-              }
-            }
+                __v: 0,
+              },
+            },
           ],
-          as: "results"
-        }
+          as: "results",
+        },
       },
       {
         $addFields: {
-          id: "$_id"
-        }
+          id: "$_id",
+        },
       },
       {
         $project: {
           _id: 0,
-          __v: 0
-        }
-      }
+          __v: 0,
+        },
+      },
     ]);
-    finalResult.map(e => {
-      e.openBiddingTimeGmt530 = moment(e.openBiddingTime).utcOffset('+05:30').format('hh:mm A')
-      e.closingBiddingTimeGmt530 = moment(e.closingBiddingTime).utcOffset('+05:30').format('hh:mm A')
-    })
-    return res.status(200).json({ status: "success", start: start, end: end, result: finalResult });
+    finalResult.map((e) => {
+      e.openBiddingTimeGmt530 = moment(e.openBiddingTime)
+        .utcOffset("+05:30")
+        .format("hh:mm A");
+      e.closingBiddingTimeGmt530 = moment(e.closingBiddingTime)
+        .utcOffset("+05:30")
+        .format("hh:mm A");
+    });
+    return res
+      .status(200)
+      .json({ status: "success", start: start, end: end, result: finalResult });
   } catch (err) {
     console.error(err);
     return res
@@ -1026,88 +1140,87 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
   }
 });
 function parseMainString(mainString) {
-  console.log(mainString)
+  console.log(mainString);
   const [open, middle, close] = mainString.split("-");
   const halfSangam1 = `${open}${middle.charAt(1)}`;
   const halfSangam2 = `${close}${middle.charAt(0)}`;
   const fullSangam = `${open}${close}`;
   return [
     {
-      cat: 'Single',
-      type: 'Open',
+      cat: "Single",
+      type: "Open",
       result: middle.charAt(0),
-      indicator: 0
+      indicator: 0,
     },
     {
-      cat: 'Single',
-      type: 'Close',
+      cat: "Single",
+      type: "Close",
       result: middle.charAt(1),
-      indicator: 1
+      indicator: 1,
     },
     {
-      cat: 'Jodi',
-      type: 'Open',
+      cat: "Jodi",
+      type: "Open",
       result: middle,
-      indicator: 2
+      indicator: 2,
     },
     {
-      cat: 'Single Pana',
-      type: 'Open',
+      cat: "Single Pana",
+      type: "Open",
       result: open,
-      indicator: 0
+      indicator: 0,
     },
     {
-      cat: 'Single Pana',
-      type: 'Close',
+      cat: "Single Pana",
+      type: "Close",
       result: close,
-      indicator: 1
+      indicator: 1,
     },
     {
-      cat: 'Double Pana',
-      type: 'Open',
+      cat: "Double Pana",
+      type: "Open",
       result: open,
-      indicator: 0
+      indicator: 0,
     },
     {
-      cat: 'Double Pana',
-      type: 'Close',
+      cat: "Double Pana",
+      type: "Close",
       result: close,
-      indicator: 1
+      indicator: 1,
     },
     {
-      cat: 'Triple Pana',
-      type: 'Open',
+      cat: "Triple Pana",
+      type: "Open",
       result: open,
-      indicator: 0
+      indicator: 0,
     },
     {
-      cat: 'Triple Pana',
-      type: 'Close',
+      cat: "Triple Pana",
+      type: "Close",
       result: close,
-      indicator: 1
+      indicator: 1,
     },
     {
-      cat: 'Half Sangam',
-      type: 'Open',
+      cat: "Half Sangam",
+      type: "Open",
       result: halfSangam1,
-      indicator: 2
+      indicator: 2,
     },
     {
-      cat: 'Half Sangam',
-      type: 'Close',
+      cat: "Half Sangam",
+      type: "Close",
       result: halfSangam2,
-      indicator: 2
+      indicator: 2,
     },
     {
-      cat: 'Full Sangam',
-      type: 'Open',
+      cat: "Full Sangam",
+      type: "Open",
       result: fullSangam,
-      indicator: 2
-    }];
+      indicator: 2,
+    },
+  ];
 
   //rollback previous winner
-
 }
-
 
 module.exports = app;
