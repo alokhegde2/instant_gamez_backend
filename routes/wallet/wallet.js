@@ -217,6 +217,11 @@ app.get("/getWithdrawRequest", verify.verifyAdmin,
     try {
       const withdrawals = await withdrawalRequest.aggregate([
         {
+          $match: {
+            isApprove: 0
+          }
+        },
+        {
           $lookup: {
             from: 'users',
             localField: 'userId',
@@ -233,20 +238,53 @@ app.get("/getWithdrawRequest", verify.verifyAdmin,
           }
         },
         {
+          $sort: { createdAt: -1 }
+        },
+        {
           $addFields: {
             createdAt: {
               $dateToString: { format: '%d/%m/%Y %H:%M', date: '$createdAt' }
             }
           }
+        }
+      ]);
+      const actionWithdrawal = await withdrawalRequest.aggregate([
+        {
+          $match: {
+            isApprove: { $in: [1, 2, 3] }
+          }
         },
         {
-          $sort: { isApprove: 1, createdAt: -1 }
+          $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $lookup: {
+            from: 'wallets',
+            localField: 'walletId',
+            foreignField: '_id',
+            as: 'wallet'
+          }
+        },
+        {
+          $sort: { createdAt: -1 }
+        },
+        {
+          $addFields: {
+            createdAt: {
+              $dateToString: { format: '%d/%m/%Y %H:%M', date: '$createdAt' }
+            }
+          }
         }
       ]);
 
       return res.status(200).json({
         status: "success",
-        data: withdrawals,
+        data: [...withdrawals, ...actionWithdrawal],
         message: `withdrawal request found successfully`,
       });
     } catch (error) {
