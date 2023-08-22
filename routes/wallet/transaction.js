@@ -35,10 +35,7 @@ app.get("/:id", verify.verify, async (req, res) => {
           { typeOfTransaction: "Deposit" },
           { typeOfTransaction: "Withdraw" },
         ],
-      })
-        .sort({ dateOfTransaction: -1 })
-        .limit(limit)
-        .skip(startIndex);
+      }).sort({ dateOfTransaction: -1 });
     } else if (transType == "Biddings") {
       var transaction = await Transactions.find({
         user: id,
@@ -47,18 +44,12 @@ app.get("/:id", verify.verify, async (req, res) => {
           { typeOfTransaction: "Winning" },
           { typeOfTransaction: "GamePlay" },
         ],
-      })
-        .sort({ dateOfTransaction: -1 })
-        .limit(limit)
-        .skip(startIndex);
+      }).sort({ dateOfTransaction: -1 });
     } else {
       var transaction = await Transactions.find({
         user: id,
         typeOfTransaction: "Refer",
-      })
-        .sort({ dateOfTransaction: -1 })
-        .limit(limit)
-        .skip(startIndex);
+      }).sort({ dateOfTransaction: -1 });
     }
     return res
       .status(200)
