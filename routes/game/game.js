@@ -587,7 +587,7 @@ app.get("/game/names", verify, async (req, res) => {
   try {
     var gameData = await Game.find({
       isDeleted: false,
-    }).select({name:1}).sort({ openBiddingTime: "asc" });
+    }).select({name:1}).sort({ openBiddingTime: "asc" }).distinct('name');
 
     return res.status(200).json({ status: "success", games: gameData });
   } catch (error) {
@@ -639,7 +639,7 @@ app.post("/bid", verify, async (req, res) => {
   const { gameId, userId, amount, biddingCategory, biddingOn, biddingNumber } =
     req.body;
 
-  //VALIDATING THE RECIVED FROM THE REQUEST
+  //VALIDATING THE RECIVED FROM THE REQUEST  
   const { error } = biddingValidation(req.body);
   if (error) {
     return res.status(400).json({ message: error.details[0].message });
@@ -733,8 +733,6 @@ app.get("/bid/:userId", verify, async (req, res) => {
         strictPopulate: false,
       })
       .sort({ createdDate: -1 })
-      .limit(limit)
-      .skip(startIndex);
 
     return res.status(200).json({ status: "success", bids: bids });
   } catch (error) {
