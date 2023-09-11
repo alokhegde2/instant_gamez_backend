@@ -36,15 +36,6 @@ app.get("/:id", verify.verify, async (req, res) => {
           { typeOfTransaction: "Refer" },
         ],
       }).sort({ dateOfTransaction: -1 });
-      var groupedData = {};
-
-      transaction.forEach((doc) => {
-        const dateKey = doc.dateOfTransaction.toISOString().split("T")[0]; // Group by date only
-        if (!groupedData[dateKey]) {
-          groupedData[dateKey] = [];
-        }
-        groupedData[dateKey].push(doc);
-      });
     } else if (transType == "DW") {
       var transaction = await Transactions.find({
         user: id,
@@ -53,15 +44,6 @@ app.get("/:id", verify.verify, async (req, res) => {
           { typeOfTransaction: "Deposit" },
         ],
       }).sort({ dateOfTransaction: -1 });
-      var groupedData = {};
-
-      transaction.forEach((doc) => {
-        const dateKey = doc.dateOfTransaction.toISOString().split("T")[0]; // Group by date only
-        if (!groupedData[dateKey]) {
-          groupedData[dateKey] = [];
-        }
-        groupedData[dateKey].push(doc);
-      });
     } else if (transType == "WB") {
       var transaction = await Transactions.find({
         user: id,
@@ -71,33 +53,15 @@ app.get("/:id", verify.verify, async (req, res) => {
           { typeOfTransaction: "GamePlay" },
         ],
       }).sort({ dateOfTransaction: -1 });
-      var groupedData = {};
-
-      transaction.forEach((doc) => {
-        const dateKey = doc.dateOfTransaction.toISOString().split("T")[0]; // Group by date only
-        if (!groupedData[dateKey]) {
-          groupedData[dateKey] = [];
-        }
-        groupedData[dateKey].push(doc);
-      });
     } else {
       var transaction = await Transactions.find({
         user: id,
         typeOfTransaction: "Refer",
       }).sort({ dateOfTransaction: -1 });
-      var groupedData = {};
-
-      transaction.forEach((doc) => {
-        const dateKey = doc.dateOfTransaction.toISOString().split("T")[0]; // Group by date only
-        if (!groupedData[dateKey]) {
-          groupedData[dateKey] = [];
-        }
-        groupedData[dateKey].push(doc);
-      });
     }
     return res
       .status(200)
-      .json({ status: "success", transactions: groupedData });
+      .json({ status: "success", transactions: transaction });
   } catch (error) {
     console.error(error);
     return res.status(400).json({ error: error, status: "error" });
