@@ -32,7 +32,8 @@ app.get("/:id", verify.verify, async (req, res) => {
         user: id,
         $or: [
           { typeOfTransaction: "Deposit" },
-          { typeOfTransaction: "Withdraw" },
+          { typeOfTransaction: "GamePlay" },
+          { typeOfTransaction: "Refer" },
         ],
       }).sort({ dateOfTransaction: -1 });
       var groupedData = {};
@@ -44,7 +45,24 @@ app.get("/:id", verify.verify, async (req, res) => {
         }
         groupedData[dateKey].push(doc);
       });
-    } else if (transType == "Biddings") {
+    } else if (transType == "DW") {
+      var transaction = await Transactions.find({
+        user: id,
+        $or: [
+          { typeOfTransaction: "Withdraw" },
+          { typeOfTransaction: "Deposit" },
+        ],
+      }).sort({ dateOfTransaction: -1 });
+      var groupedData = {};
+
+      transaction.forEach((doc) => {
+        const dateKey = doc.dateOfTransaction.toISOString().split("T")[0]; // Group by date only
+        if (!groupedData[dateKey]) {
+          groupedData[dateKey] = [];
+        }
+        groupedData[dateKey].push(doc);
+      });
+    } else if (transType == "WB") {
       var transaction = await Transactions.find({
         user: id,
         $or: [
