@@ -20,10 +20,10 @@ const appOfferSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
-  bannerImage: {
-    type: String,
-    required: false,
-  },
+  // bannerImage: {
+  //   type: String,
+  //   required: false,
+  // },
   isDeleted: {
     type: Boolean,
     required: false,

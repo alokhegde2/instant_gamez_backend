@@ -61,8 +61,11 @@ const configRoute = require("./routes/app_configs/app_configs");
 // TRUNCATE MODULE
 const truncateRoute = require("./routes/others/truncate_db");
 
+// APP OFFERS MODULE
+const appOffersRoute = require("./routes/appOffers/appOffers");
+
 // TODO: TESTING MODULE OF THE CHAT
-console.log(`${api}/admin`)
+console.log(`${api}/admin`);
 
 // ROUTE MIDDLEWARES
 app.use(`${api}/admin`, adminRoute);
@@ -88,6 +91,9 @@ app.use(`${api}/config`, configRoute);
 // TRUCATING MODULE
 app.use(`${api}/truncate`, truncateRoute);
 
+// APP OFFERS MODULE
+app.use(`${api}/appOffers`, appOffersRoute);
+
 // TODO: TESTING MODULE OF THE CHAT
 socketIO.on("connection", (socket) => {
   // ON CONNECTION OF THE USER
@@ -109,7 +115,7 @@ socketIO.on("connection", (socket) => {
   // ONCE USER GOT CONNECTED JUST ACCESS THIS POINT TO GET ALL THE OLD MESSAGE
   // ONLY SEND THE LIMITED MESSAGE THROUGH THIS POINT
   // TODO : NEEDS SOME PLAN ON GETTING THE DATA, FOR NOW I'M THINKING LIKE THIS ROUTE IS NOT NEEDED HERE
-  socket.on("getMessageUser", (data) => { });
+  socket.on("getMessageUser", (data) => {});
 
   socket.on("message", (data) => {
     // GETTING THE DATA FROM THE CLIENT
@@ -146,11 +152,16 @@ socketIO.on("connection", (socket) => {
 });
 
 // Connecting to mongodb database
-console.log(process.env.ENVIRONMENT == undefined ? process.env.DATABASE : process.env.DEV_DATABASE)
+console.log(
+  process.env.ENVIRONMENT == undefined
+    ? process.env.DATABASE
+    : process.env.DEV_DATABASE
+);
 mongoose
   .connect(
-    process.env.ENVIRONMENT == undefined ? process.env.DATABASE : process.env.DEV_DATABASE
-      + "/instant_gamez",
+    process.env.ENVIRONMENT == undefined
+      ? process.env.DATABASE
+      : process.env.DEV_DATABASE + "/instant_gamez",
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,
