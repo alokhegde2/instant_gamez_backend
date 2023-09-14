@@ -138,11 +138,6 @@ app.get("/current", verify, async (req, res) => {
 
   var day = currentDate.getDay();
 
-  const page = parseInt(req.query.page);
-  const limit = parseInt(req.query.limit);
-
-  const startIndex = (page - 1) * limit;
-
   try {
     // We are getting data where deleted date is not today
     // And getting result of only today games
@@ -268,12 +263,6 @@ app.get("/current", verify, async (req, res) => {
         $sort: {
           openBiddingTime: 1,
         },
-      },
-      {
-        $limit: limit, // Replace 'limit' with the actual value you want to use
-      },
-      {
-        $skip: startIndex, // Replace 'startIndex' with the actual value you want to use
       },
     ]);
 
