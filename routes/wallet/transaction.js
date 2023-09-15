@@ -56,7 +56,7 @@ app.get("/:id", verify.verify, async (req, res) => {
     } else if (transType == "W") {
       const status = true;
       var transaction = await Withdraw.find({
-        user: id,
+        userId: id,
       })
         .select({
           user: "$userId",
