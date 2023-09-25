@@ -14,6 +14,7 @@ const Game = require("../../models/game/game");
 const Result = require("../../models/game/result");
 const User = require("../../models/user/user");
 const Bidding = require("../../models/bidding/bidding");
+const Winning = require("../../models/game/winner");
 
 // IMPORTING VALIDATION
 const {
@@ -913,6 +914,7 @@ app.get("/lastRollback/:id", verifyAdmin, async (req, res) => {
 
   return res.status(200).json({ status: "success", result: rollbackIs });
 });
+
 app.get("/results/getGames", verifyAdmin, async (req, res) => {
   try {
     // // // get the current date and time
@@ -1163,6 +1165,35 @@ app.get("/results/getGames", verifyAdmin, async (req, res) => {
       .json({ status: "error", message: "Some error occurred", error: err });
   }
 });
+
+//GEtting winners data
+app.get("/game/winners", verifyAdmin, async (req, res) => {
+  const page = parseInt(req.query.page);
+  const limit = parseInt(req.query.limit);
+
+  const startIndex = (page - 1) * limit;
+  try {
+    var users = await Winning.find()
+      .populate({
+        path: "gameId",
+        select:['name'],
+        strictPopulate: true,
+      }).populate({
+        path: "userId",
+        select:['phoneNumber'],
+        strictPopulate: true,
+      })
+      .sort({ resultAnouncedAt: "asc" })
+      .limit(limit)
+      .skip(startIndex);
+
+    return res.status(200).json({ status: "success", winners: users });
+  } catch (error) {
+    console.error(error);
+    return res.status(400).json({ error: error, status: "error" });
+  }
+});
+
 function parseMainString(mainString) {
   console.log(mainString);
   const [open, middle, close] = mainString.split("-");

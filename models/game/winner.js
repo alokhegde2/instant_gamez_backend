@@ -15,7 +15,7 @@ const winnerSchema = new mongoose.Schema({
   gameId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: "Games",
+    ref: "Game",
   },
   wonNumber: {
     type: String,
