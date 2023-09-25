@@ -35,23 +35,27 @@ app.get("/:id", verify.verify, async (req, res) => {
           { typeOfTransaction: "Deposit" },
           { typeOfTransaction: "GamePlay" },
           { typeOfTransaction: "Refer" },
-        ],
-      }).sort({ dateOfTransaction: -1 });
-    } else if (transType == "DW") {
-      var transaction = await Transactions.find({
-        user: id,
-        $or: [
-          { typeOfTransaction: "Deposit" },
-        ],
-      }).sort({ dateOfTransaction: -1 });
-    } else if (transType == "WB") {
-      var transaction = await Transactions.find({
-        user: id,
-        $or: [
           { typeOfTransaction: "Rollback" },
           { typeOfTransaction: "Winning" },
-          { typeOfTransaction: "GamePlay" },
         ],
+      }).sort({ dateOfTransaction: -1 });
+    } else if (transType == "D") {
+      var transaction = await Transactions.find({
+        user: id,
+        $or: [{ typeOfTransaction: "Deposit" }],
+      }).sort({ dateOfTransaction: -1 });
+    } else if (transType == "WI") {
+      var transaction = await Transactions.find({
+        user: id,
+        $or: [
+          { typeOfTransaction: "Winning" },
+          { typeOfTransaction: "Rollback" },
+        ],
+      }).sort({ dateOfTransaction: -1 });
+    } else if (transType == "GM") {
+      var transaction = await Transactions.find({
+        user: id,
+        $or: [{ typeOfTransaction: "GamePlay" }],
       }).sort({ dateOfTransaction: -1 });
     } else if (transType == "W") {
       const status = true;
@@ -66,7 +70,7 @@ app.get("/:id", verify.verify, async (req, res) => {
           dateOfTransaction: "$updatedAt",
           message: "$description",
           createdDate: "$createdAt",
-          id:"$_id",
+          id: "$_id",
           status: {
             $cond: {
               if: { $eq: ["$isApprove", 0] },
