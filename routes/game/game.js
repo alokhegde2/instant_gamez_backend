@@ -208,26 +208,26 @@ app.get("/current", verify, async (req, res) => {
         $match: {
           openDate: day,
           isDeleted: false,
-          disabledDate: {
-            $not: {
-              $gte: new Date(
-                currentDate.getFullYear(),
-                currentDate.getMonth(),
-                currentDate.getDate(),
-                0,
-                0,
-                0
-              ),
-              $lt: new Date(
-                currentDate.getFullYear(),
-                currentDate.getMonth(),
-                currentDate.getDate(),
-                23,
-                59,
-                59
-              ),
-            },
-          },
+          // disabledDate: {
+          //   $not: {
+          //     $gte: new Date(
+          //       currentDate.getFullYear(),
+          //       currentDate.getMonth(),
+          //       currentDate.getDate(),
+          //       0,
+          //       0,
+          //       0
+          //     ),
+          //     $lt: new Date(
+          //       currentDate.getFullYear(),
+          //       currentDate.getMonth(),
+          //       currentDate.getDate(),
+          //       23,
+          //       59,
+          //       59
+          //     ),
+          //   },
+          // },
         },
       },
       {
@@ -279,6 +279,7 @@ app.get("/current", verify, async (req, res) => {
         ];
       }
     });
+
     //Check for close time
     gameData.forEach((element) => {
       var closeTime = new Date(element["closingBiddingTime"]);
@@ -290,6 +291,39 @@ app.get("/current", verify, async (req, res) => {
         }
       } else if (currentTime.getHours() > closeTime.getHours()) {
         sortedGame.push(element);
+      }
+    });
+
+    //Check for disabled games
+    gameData.forEach((element) => {
+      var isFound = sortedGame.find((game) => game === element);
+      var disabedDate = new Date(element["disabledDate"]);
+      if (!isFound && disabedDate) {
+        if (
+          !(
+            new Date(disabedDate) >=
+              new Date(
+                currentDate.getFullYear(),
+                currentDate.getMonth(),
+                currentDate.getDate(),
+                0,
+                0,
+                0
+              ) &&
+            new Date(disabedDate) <
+              new Date(
+                currentDate.getFullYear(),
+                currentDate.getMonth(),
+                currentDate.getDate(),
+                23,
+                59,
+                59
+              )
+          )
+        ) {
+          //Game is not disabled for that day
+          sortedGame.push(element);
+        }
       }
     });
 
@@ -576,7 +610,10 @@ app.get("/game/names", verify, async (req, res) => {
   try {
     var gameData = await Game.find({
       isDeleted: false,
-    }).select({name:1}).sort({ openBiddingTime: "asc" }).distinct('name');
+    })
+      .select({ name: 1 })
+      .sort({ openBiddingTime: "asc" })
+      .distinct("name");
 
     return res.status(200).json({ status: "success", games: gameData });
   } catch (error) {
@@ -628,7 +665,7 @@ app.post("/bid", verify, async (req, res) => {
   const { gameId, userId, amount, biddingCategory, biddingOn, biddingNumber } =
     req.body;
 
-  //VALIDATING THE RECIVED FROM THE REQUEST  
+  //VALIDATING THE RECIVED FROM THE REQUEST
   const { error } = biddingValidation(req.body);
   if (error) {
     return res.status(400).json({ message: error.details[0].message });
@@ -721,7 +758,7 @@ app.get("/bid/:userId", verify, async (req, res) => {
         path: "game",
         strictPopulate: false,
       })
-      .sort({ createdDate: -1 })
+      .sort({ createdDate: -1 });
 
     return res.status(200).json({ status: "success", bids: bids });
   } catch (error) {

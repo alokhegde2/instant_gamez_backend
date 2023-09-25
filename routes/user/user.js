@@ -161,9 +161,26 @@ app.post("/mpin", async (req, res) => {
       { masterPassword: hashedMpin }
     );
 
+    //importing secret password
+    const secret = process.env.SECRET;
+
+    //Creating jwt
+    const token = jwt.sign(
+      {
+        id: phoneNumberStatus.id,
+        phoneNumber: phoneNumberStatus.phoneNumber,
+      },
+      secret,
+      { expiresIn: "7d" }
+    );
+
     return res
       .status(200)
-      .json({ status: "success", message: "Mpin created successfully!" });
+      .json({
+        status: "success",
+        authToken: token,
+        message: "Mpin created successfully!",
+      });
   } catch (error) {
     console.error(error);
     return res.status(400).json({ error: error });
