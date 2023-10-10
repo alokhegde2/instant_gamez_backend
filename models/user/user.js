@@ -44,6 +44,10 @@ const userSchema = new mongoose.Schema({
     ref: "wallets",
     default: null,
   },
+  token:{
+    type: String,
+    default: "",
+  },
   createdDate: {
     type: Date,
     default: Date.now(),

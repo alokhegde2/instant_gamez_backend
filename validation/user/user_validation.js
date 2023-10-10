@@ -1,5 +1,5 @@
 const Joi = require("joi");
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 //USER CREATION VALIDATION
 // Custom Joi extension for ObjectId validation
 const userRegisterationValidation = (data) => {
@@ -7,9 +7,9 @@ const userRegisterationValidation = (data) => {
     phoneNumber: Joi.string().length(10).required(),
     referralUserId: Joi.string().custom((value, helpers) => {
       if (!mongoose.Types.ObjectId.isValid(value)) {
-        return { value, errors: helpers.error('objectId.invalid') };
+        return { value, errors: helpers.error("objectId.invalid") };
       }
-    })
+    }),
   });
 
   return schema.validate(data);
@@ -20,6 +20,7 @@ const mpinCreationValidation = (data) => {
   const schema = Joi.object({
     phoneNumber: Joi.string().length(10).required(),
     mPin: Joi.string().length(4).required(),
+    token: Joi.string().required(),
   });
 
   return schema.validate(data);
@@ -41,6 +42,7 @@ const mpinVerificationValidation = (data) => {
   const schema = Joi.object({
     phoneNumber: Joi.string().length(10).required(),
     mPin: Joi.string().length(4).required(),
+    token:Joi.string().required()
   });
 
   return schema.validate(data);

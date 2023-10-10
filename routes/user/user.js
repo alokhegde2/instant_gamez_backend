@@ -158,7 +158,7 @@ app.post("/mpin", async (req, res) => {
   try {
     await User.findOneAndUpdate(
       { phoneNumber: Number.parseInt(phoneNumber) },
-      { masterPassword: hashedMpin }
+      { masterPassword: hashedMpin, token: req.body.token }
     );
 
     //importing secret password
@@ -174,13 +174,11 @@ app.post("/mpin", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    return res
-      .status(200)
-      .json({
-        status: "success",
-        authToken: token,
-        message: "Mpin created successfully!",
-      });
+    return res.status(200).json({
+      status: "success",
+      authToken: token,
+      message: "Mpin created successfully!",
+    });
   } catch (error) {
     console.error(error);
     return res.status(400).json({ error: error });
@@ -238,6 +236,12 @@ app.post("/verify/mpin", async (req, res) => {
     phoneNumberStatus = await User.findOne({
       phoneNumber: Number.parseInt(phoneNumber),
     });
+
+    //Updating the token
+    await User.findOneAndUpdate(
+      { phoneNumber: Number.parseInt(phoneNumber) },
+      { token: req.body.token }
+    );
 
     if (!phoneNumberStatus) {
       return res.status(400).json({
