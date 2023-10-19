@@ -262,7 +262,7 @@ app.get("/current", verify, async (req, res) => {
       },
       {
         $sort: {
-          openBiddingTime: 1,
+          openBiddingTime: -1,
         },
       },
     ]);
@@ -328,6 +328,15 @@ app.get("/current", verify, async (req, res) => {
       }
     });
 
+    //Check for open bid
+    gameData.forEach((element) => {
+      var isFound = sortedGame.find((game) => game === element);
+
+      if (!isFound) {
+        sortedGame.push(element);
+      }
+    });
+
     //Check for running bid
     gameData.forEach((element) => {
       var isFound = sortedGame.find((game) => game === element);
@@ -345,15 +354,10 @@ app.get("/current", verify, async (req, res) => {
       }
     });
 
-    //Check for open bid
-    gameData.forEach((element) => {
-      var isFound = sortedGame.find((game) => game === element);
-
-      if (!isFound) {
-        sortedGame.push(element);
-      }
-    });
+    
     sortedGame.reverse();
+
+    console.log(sortedGame);
 
     return res.status(200).json({ status: "success", games: sortedGame });
   } catch (error) {
